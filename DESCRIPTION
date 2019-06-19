@@ -1,11 +1,23 @@
 Package: SSES
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Spatial Social Ecological Systems
+Version: 1.1.1
+Date: 2019-05-27
+Authors@R: c(
+    person("Tom", "Carruthers",, "t.carruthers@oceans.ubc.ca", role=c("aut", "cre"))
+Maintainer: Tom Carruthers <t.carruthers@oceans.ubc.ca>
+Description: Strategic landscape-scale management decision making for B.C. recreational trout fisheries
+    (see Carruthers et al. 2018 <https://doi.org/10.1139/cjfas-2018-0168>).
+License: GPL-2
+Depends:
+    R (>= 2.10.0),
+Imports:
+    abind,
+    utils
+LazyData: yes
+LazyLoad: yes
 Encoding: UTF-8
-LazyData: true
+RoxygenNote: 6.1.1
+URL: https://tcarruth.github.io/SSES/.
+BugReports: https://github.com/tcarruth/SSES/issues
+Roxygen: list(markdown = TRUE)
