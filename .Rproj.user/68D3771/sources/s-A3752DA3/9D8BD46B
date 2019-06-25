@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1561436343007.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "9D8BD46B",
+    "lastKnownWriteTime" : 1484331852,
+    "last_content_update" : 1561436414598,
+    "path" : "C:/GitHub/SSES/R/Source.r",
+    "project_path" : "R/Source.r",
+    "properties" : {
+        "cursorPosition" : "305,109",
+        "scrollLine" : "281"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -14,8 +14,8 @@
 
 setwd("C:/Users/tcar_/Dropbox/SSES")                                   # Set working directory
 Datdir<-paste0(getwd(),"/Data/")
-Setfile<-paste(Drive,"Trout lakes/Prelim/Setup real.csv")
-setwd(paste(Drive,":/Trout lakes/Prelim/",sep=""))
+#Setfile<-paste(Drive,"Trout lakes/Prelim/Setup real.csv")
+#setwd(paste(Drive,":/Trout lakes/Prelim/",sep=""))
 datafile<-paste(Drive,":/Trout lakes/Prelim/Setup.csv",sep="")
 source("Source.r")                                                     # Load the source code
 obj<-new("Landscape",datafile)                                         # B1  Create a landscape object from the setup.csv file in the working directory

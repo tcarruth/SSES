@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1561436423615.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "7557D03D",
+    "lastKnownWriteTime" : 1561441716,
+    "last_content_update" : 1561441716883,
+    "path" : "C:/GitHub/SSES/R/Landscape_object.R",
+    "project_path" : "R/Landscape_object.R",
+    "properties" : {
+        "cursorPosition" : "115,38",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

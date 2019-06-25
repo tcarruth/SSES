@@ -13,3 +13,17 @@
 # --- 1a Dependencies  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #
 #
+if (!require('maps'))    install.packages('maps',repos='http://cran.stat.sfu.ca')
+if (!require('mapdata')) install.packages('mapdata',repos='http://cran.stat.sfu.ca')
+if (!require('mapplots'))    install.packages('mapplots',repos='http://cran.stat.sfu.ca')
+if (!require('animation')) install.packages('animation',repos='http://cran.stat.sfu.ca')
+if (!require('vegan'))install.packages('vegan',repos='http://cran.stat.sfu.ca')
+if (!require('wordcloud'))install.packages('vegan',repos='http://cran.stat.sfu.ca')
+
+# Load required packages -----------------------------------------------------------------------------------------------------------------
+library(maps)
+library(mapdata)
+library(mapplots)
+library(animation)
+library(vegan)
+library(wordcloud)
