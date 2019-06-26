@@ -1,0 +1,172 @@
+# ==============================================================================================================================================================
+# === Misc functions =========================================================================================================================================
+# ==============================================================================================================================================================
+
+#' Convert factors to numeric values
+#'
+#' @param x factor
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#'   fac2num(as.factor(1))
+#' }
+#' @export fac2num
+fac2num<-function(x){
+  x<-as.matrix(x)
+  as.numeric(as.character(x))
+}
+
+#' Get lognormal standard deviation parameter for a variable with m and sd transformed values
+#'
+#' @param m mean value of transformed variable
+#' @param sd standard deviation of transformed variable
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#' sdconv(m=1,sd=0.5)
+#' }
+#' @export sdconv
+sdconv<-function(m,sd)(log(1+((sd^2)/(m^2))))^0.5
+
+
+#' Get lognormal mean parameter for a variable with m and sd transformed values
+#'
+#' @param m mean value of transformed variable
+#' @param sd standard deviation of transformed variable
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#' mconv(m=1,sd=0.5)
+#' }
+#' @export mconv
+mconv<-function(m,sd)log(m)-0.5*log(1+((sd^2)/(m^2)))
+
+#' Simulate lognormally sampled biases based on a CV
+#'
+#' @param nsim the number of simulations
+#' @param CV the coefficient of variation of the distribution of biases
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#' plot(density(getbias(nsim=1000,CV=0.1)))
+#' }
+#' @export getbias
+getbias<-function(nsim,CV) exp(rnorm(n=nsim,mconv(1,CV),sdconv(1,CV)))
+
+#' Count NA values in a vector
+#'
+#' @param x a vector of values numeric, or character
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#' tna(c(NA,1,NA,2,NA))
+#' }
+#' @export tna
+tna<-function(x)sum(is.na(x))
+
+#' Get 10th and 90th percentiles of a vector of values
+#'
+#' @param x a vector of values numeric values
+#' @author T. Carruthers
+#' @examples
+#' \dontrun{
+#' ninety(c(NA,1,NA,2,NA))
+#' }
+#' @export ninety
+ninety<-function(x)quantile(x,c(0.1,0.9))
+
+#' Generates lognormal random variable
+#'
+#' @param n integer: the number of draws
+#' @param CV numeric: the coefficient of variation
+#' @author T. Carruthers
+#' @export geterr
+geterr<-function(n,CV)exp(rnorm(n,mconv(1,CV),sdconv(1,CV)))
+
+#' Create a dummy set of lake attributes for initializing the landscape object
+#'
+#' @param attrtype a vector of attribute types
+#' @param nl integer a number of lakes
+#' @param exn integer the number of alternative management options under investigation
+#' @author T. Carruthers
+#' @export esimlakemanage
+esimlakemanage<-function(attrtype,nl,exn){
+  out<-array(NA,dim=c(exn,nl,length(attrtype)))
+  contcol<-(1:length(attrtype))[attrtype==1]
+  catcol<-(1:length(attrtype))[attrtype>1]
+  out[,,contcol]<-getbias(length(contcol)*nl*exn,0.2) # 20% CV
+  out[,,catcol]<-floor(runif(length(catcol)*nl*exn)*rep(attrtype[catcol],each=nl*exn))+1
+  out
+}
+
+#' This is the look up table for the values of lake attributes
+#'
+#' @param vals a vector of attribute value
+#' @param dims the number of levels of each attribute
+#' @author T. Carruthers
+#' @export getattr
+getattr<-function(vals,dims){
+  nattr<-length(dims)
+  nattrvals<-sum(dims)
+  maxlev<-max(dims)
+  na<-length(vals)/nattrvals
+  out<-array(NA,dim=c(1,na,nattr,maxlev))
+  for(i in 1:nattr){
+    for(j in 1:dims[i]){
+      for(k in 1:na){
+        if(i==1&j==1&k==1){
+          temp<-rep(1,4)
+        }else{
+          temp<-rbind(temp,c(1,k,i,j))
+        }
+      }
+    }
+  }
+  out[temp]<-vals
+  out
+}
+
+#' This is just a way of initializing the distance matrix between pop centres and lakes as the Euclidean distance.
+#'
+#' @param xfrom a vector of longitudes of some points e.g. pop centres
+#' @param yfrom a vector of latitudes of some points e.g. pop centres
+#' @param xto a vector of longitude of some other points e.g. lakes
+#' @param yto a vector of latitudes of some other points e.g. lakes
+#' @param nmanage the number of alternative management options under investigation
+#' @param CVd the CV on lognormal distances (for added stochasticity)
+#' @param stand Boolean: should all distances be standardized to mean 1
+#' @author T. Carruthers
+#' @export getEdist
+getEdist<-function(xfrom,yfrom,xto,yto,nmanage,CVd,stand){    # Calculates Euclidean distance from x to y, length(x) rows and length(y) columns
+  nf<-length(xfrom)
+  nt<-length(xto)
+  xf<-array(xfrom,dim=c(nf,nt))
+  xt<-array(rep(xto,each=nf),dim=c(nf,nt))
+  yf<-array(yfrom,dim=c(nf,nt))
+  yt<-array(rep(yto,each=nf),dim=c(nf,nt))
+  dis<-sqrt(((xf-xt)^2)+((yf-yt)^2))
+  dis<-array(rep(dis,each=nmanage)*geterr(nf*nt*nmanage,CVd),dim=c(nmanage,nf,nt))
+  if(!stand)dis
+  if(stand)dis/array(rep(apply(dis,1,mean),each=nf*nt),dim=c(nmanage,nf,nt)) # standardize to mean 1
+}
+
+
+#' Initializes a stocking array, nmanage x lake x stocking type.
+#'
+#' @param areas a list of named stocked resources (lakes)
+#' @param nst integer: the number of stocking types on the landscape
+#' @param nmanage integer: the number of alternative management options
+#' @param stwt numeric the weight of the stocked fish of each stocking type
+#' @author T. Carruthers
+#' @export getlxslev
+getlxslev<-function(areas,nst,nmanage,stwt){
+
+  nlakes<-length(areas)
+  lxslev<-array(0,dim=c(nmanage,nlakes,nst))
+  ntot<-nmanage*nlakes
+  stype<-ceiling(runif(ntot)*nst)
+  indss<-cbind(as.matrix(expand.grid(1:nmanage,1:nlakes)),stype)
+  lxslev[indss]<-(3/stwt[indss[,3]])^0.5*200*areas[indss[,2]]*runif(ntot,0.5,1.5)
+  lxslev
+
+}

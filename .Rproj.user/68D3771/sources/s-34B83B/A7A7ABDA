@@ -1,24 +1,24 @@
 {
     "collab_server" : "",
     "contents" : "",
-    "created" : 1561436343007.000,
+    "created" : 1561524999414.000,
     "dirty" : true,
     "encoding" : "UTF-8",
     "folds" : "",
     "hash" : "0",
-    "id" : "9D8BD46B",
+    "id" : "A7A7ABDA",
     "lastKnownWriteTime" : 1484331852,
-    "last_content_update" : 1561436414598,
-    "path" : "C:/GitHub/SSES/R/Source.r",
-    "project_path" : "R/Source.r",
+    "last_content_update" : 1561528036108,
+    "path" : "C:/Users/tcar_/Dropbox/SSES/Code/Source.r",
+    "project_path" : null,
     "properties" : {
-        "cursorPosition" : "305,109",
-        "scrollLine" : "281"
+        "cursorPosition" : "1823,60",
+        "scrollLine" : "1811"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 6,
+    "relative_order" : 8,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "r_source"
