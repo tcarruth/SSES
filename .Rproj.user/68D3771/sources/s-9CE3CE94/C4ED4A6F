@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1560919976516.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C4ED4A6F",
+    "lastKnownWriteTime" : 1562218495,
+    "last_content_update" : 1562218495900,
+    "path" : "C:/Users/tcar_/Dropbox/SSES/Step 3 Calculate IFD.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "38,55",
+        "scrollLine" : "16",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

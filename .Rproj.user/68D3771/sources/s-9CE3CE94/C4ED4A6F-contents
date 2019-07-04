@@ -1,0 +1,170 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Step 3. Calculate IFD landscape angling effort =============================================================
+#
+# In this script, effort will be calculated for the subset of experimental lakes
+#
+#
+# --- 3a Prerequisites  ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcar_/Dropbox/SSES")                                   # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+i_have_an_hour=F                                                       # How much computation do you want to do?
+i_have_2_mins=T
+
+# --- Load latest complete landscape object (714lakes, 24 population centres) ------------------------------------
+
+load(file='./Out/Landscape/Prelim_7')                                   # Load a recent full landscape model
+summary(obj,lcex=0.25)                                 # What does it look like
+
+
+# --- How well are we predicting landscape effort? ------------------------------------------------------------
+if(i_have_2_mins){
+
+  uprat<-0.015     # When converging on a stable effort distribution is the contributing fraction of new effort
+  varind<-0.2    # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+  nits<-500      # The number of iterations for the numerical convergence to the approximate IFD
+
+
+  # --- Basic effort calculation (assuming effort is proportional to population size) -------------------------
+  obj@sel<-array(c(0,0.2,rep(1,obj@nage-2)),dim=c(1,obj@nage))
+
+  obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+
+  cond<-!is.na(obj@exeff[1,])&(obj@exeff[1,]<3|obj@sigeff[1,1,]<3)
+  obj@exeff[1,cond]<-NA
+  obj2<-Lsub(obj,!obj@longnam=="BEAVER4")
+  graphics.off()
+  par(mfrow=c(2,2),mai=c(0.8,0.8,0.1,0.1))                # Set up a plot
+  plotconv(obj,tol=1,totE=T)                              # Did it converge (total effort on a lake)?
+  Ecomp(obj,lims=c(2,11),nice=T,log=T,funcy=NA)                      # How does the effort match up (log-log plot)?
+  Ecomp(obj,lims=c(0,4000),nice=T,log=F,funcy=NA)                      # How does the effort match up (log-log plot)?
+  EcompD(obj,lims=c(0,150),nice=T,log=F,funcy=NA)                      # How does the effort match up (log-log plot)?
+
+  mapeff(obj,dens=F,lcex=0.25)
+}
+
+# --- regional participation rate optimization -------------------------------------------------------
+
+
+if(i_have_an_hour){
+
+
+  test<-optimize(optEfun4,lower=-2,upper=2,
+                 obj=obj,nits=200,plot=T,varind=varind,uprat=uprat)
+
+
+
+
+  test<-optim(rep(0,obj@npc),optEfun2b,method="CG",lower=rep(log(0.1),obj@npc),upper=rep(log(10),obj@npc),
+              obj=obj,nits=35,control=list(maxit=250,ndeps=rep(0.4,obj@npc)),plot=T,
+              varind=varind,uprat=uprat,relrate=relrate)
+
+  obj<-optEfun2b(test$par,opt=F,obj=obj)                  # Make a new object using the optimized parameters
+  obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,relrate=relrate) # Run the LSM to convergence on the IFD
+  plotconv(obj,tol=1,totE=F)                             # Did it converge (total effort on a lake)?
+  Ecomp(obj,log=F,lims=c(0,1000))                                             # How does the effort match up (log-log plot)?
+
+}
+
+
+# --- Subset the landscape model ---------------------------------------------------------------------------------
+
+subs<-read.csv(paste(getwd(),'johnlakes.csv',sep="/"),header=T)                # Load John's table
+obj<-Lsub(obj,ind=match(unique(subs$WBID),obj@lakenam)) # Subset
+summary(obj)                                            # What does it look like
+
+obj<-pc_simp(obj,h=850)                                 # Simplify the population centres for identifiability
+summary(obj)                                            # What does it look like
+
+
+# --- Add real effort, catch rate and length observations to the model -------------------------------------------
+
+# Effort ---
+
+cond<-subs$Year%in%(2009:2012)
+obseff<-aggregate(subs$Effort[cond], by=list(subs$WBID[cond]),mean,na.rm=T) # Mean effort of the subset
+obseff2<-rep(NA,nrow(obseff))
+obseff2[match(obseff$Group.1,obj@lakenam)]<-obseff[,2]          # Reordered to match LS object
+obseff2<-obseff2*obj@lakearea/4                                 # Convert to annual days over entire lake
+obj@exeff<-matrix(obseff2,nrow=1)                               # Add real effort to the LS object
+
+toteff<-sum(obseff2)                                            # Total observed effort
+predeff<-sum(obj@pcsize[1,]*obj@apr[1,,]*obj@FTroutAng*obj@pcxa[1,,]) # Total predicted effort
+obj@apr<-obj@apr*toteff/predeff                             # Match annual effort in the LSM model
+
+# Catch rate ---
+
+obscr<-aggregate(subs$predCPUE[cond], by=list(subs$WBID[cond]),mean,na.rm=T)# Mean catch rate of the subset
+obscr2<-rep(NA,nrow(obscr))
+obscr2[match(obscr$Group.1,obj@lakenam)]<-obscr[,2]             # Reordered to match LS object
+obj@excr<-matrix(obscr2,nrow=1)                                 # Add real effort to the LS object
+
+# Length ---
+
+obsavs<-aggregate(subs$Mean_Length_250_GN[cond], by=list(subs$WBID[cond]),mean,na.rm=T) # Mean average length of the subset
+obsavs2<-rep(NA,nrow(obsavs))
+obsavs2[match(obsavs$Group.1,obj@lakenam)]<-obsavs[,2]          # Reordered to match LS object
+obj@exavs<-matrix(obsavs2,nrow=1)                               # Add real effort to the LS object
+
+
+# Stocking levels ---
+mustk<-apply(subs[cond,14:16],1,mean)
+stl<-aggregate(mustk,by=list(subs$WBID[cond]),mean,na.rm=T)
+stl2<-rep(NA,nrow(stl))
+stl2[match(stl$Group.1,obj@lakenam)]<-stl[,2]             # Reordered to match LS object
+obj@lxslev<-array(0,dim=c(obj@nmanage,obj@nl,obj@nst))
+obj@lxslev[1,,match("t2NYE",obj@stnam)]<-stl2*obj@lakearea
+#obj@lxslev[1,match("PAT LAKE",obj@longnam),]<-c(500,0,0,4500)
+
+
+# Access and Facilities ---
+# vivian and Dominic lakes have facilities that are effectively shared by 4 or more other lakes
+subs[subs$Lake=="Vivian",31:32]<-subs[subs$Lake=="Vivian",31:32]/4
+subs[subs$Lake=="Dominic",31:32]<-subs[subs$Lake=="Dominic",31:32]/4
+
+cond<-match(obj@lakenam,subs$WBID)
+
+acc<--(subs$Distance_on_gravel_road[cond]/55+
+         subs$Distance_on_4WD_road[cond]/15+subs$Foot_access_distance[cond]/3000)
+
+acc<-exp(-subs$Distance_on_gravel_road[cond]/55)*
+  exp(-subs$Distance_on_4WD_road[cond]/15)*
+  exp(-subs$Foot_access_distance[cond]/3000)*
+  (subs$Num_campsites[cond]+subs$Num_Lodge_beds[cond])
+
+acc<-acc-mean(acc)
+acc<-acc/sd(acc)
+obj@acc<-matrix(acc,nrow=1)
+cbind(obj@acc[1,],obj@longnam)
+
+fac<- (subs$Num_campsites[cond]+
+         subs$Num_Lodge_beds[cond])
+
+fac<-fac-mean(fac)
+fac<-fac/sd(fac)
+obj@fac<-matrix(fac,nrow=1)
+
+
+
+# --- Initial guesses at key parameters
+
+obj@acc_a<-1.15
+obj@DR<-matrix(rep(0.6,obj@na),nrow=1)
+
+# --- Save the object --------------------------------------------------------------------------------------------
+
+save(obj,file="Johndata_15_08_16")                              # Save our new streamlined LS model
+
+
+# =============================================================================================================================
+# === END =====================================================================================================================
+# =============================================================================================================================
+

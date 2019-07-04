@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562220523102.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3142655104",
+    "id" : "1FE45C88",
+    "lastKnownWriteTime" : 1562221307,
+    "last_content_update" : 1562221307204,
+    "path" : "C:/GitHub/SSES/R/aaImportFrom.R",
+    "project_path" : "R/aaImportFrom.R",
+    "properties" : {
+        "cursorPosition" : "1,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
