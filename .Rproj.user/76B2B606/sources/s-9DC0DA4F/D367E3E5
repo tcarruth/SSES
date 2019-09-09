@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568049751946.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "D367E3E5",
+    "lastKnownWriteTime" : 1568069454,
+    "last_content_update" : 1568069454540,
+    "path" : "~/GitHub/SSES/R/Landscape_plotting.R",
+    "project_path" : "R/Landscape_plotting.R",
+    "properties" : {
+        "cursorPosition" : "315,10",
+        "scrollLine" : "304",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

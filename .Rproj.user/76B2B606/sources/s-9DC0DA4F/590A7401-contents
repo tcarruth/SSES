@@ -1,0 +1,375 @@
+
+#' The IFD effort calculator
+#'
+#' @param obj an object of class 'Landscape'
+#' @param nits integer value, the number of iterations for resolving the IFD
+#' @param couch logical, has the couch effect been calculated and present in slot 'couch' of the landscape object.
+#' @param startE logical, is the IFD calculation starting at previous effort vector in slot 'eff' of the landscape object (allows further IFD iterations)
+#' @param varind positive real number, the slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+#' @param uprat fraction, When converging on a stable effort distribution this is the contributing fraction of new effort
+#' @param Gmodel character, the density dependent growth model. Options are 'Lester1', 'Lester2' and 'New Lester'
+#' @param quiet logical, should warnings and messages be surpressed?
+#' @author T. Carruthers
+#' @export calceff
+calceff<-function(obj,nits=15,couch=F,startE=F,varind=0.2,uprat=0.1,GModel="New Lester",quiet=F){
+
+  options(warn=1)
+
+  # Convergence recording
+  conv<-array(NA,dim=c(50,nits))       # A matrix for storing convergence data
+  convind<-cbind(rep(1,50),rep(1,50),sample(1:obj@npc,50,replace=T),sample(1:obj@nl,50,replace=T),sample(1:obj@na,50,replace=T)) # The index for allocating convergence data
+  Econv<-array(NA,dim=c(obj@nl,nits))  # A matrix for storing overall lake effort convergence data
+
+  nsim<-obj@nsim                             # Number of simulations (alternative realizations of the fishery system)
+  nman<-obj@nmanage                          # Number of management options simultaneously considered
+  pcsize<-obj@pcsize                         # Licenses sold in each population centre
+  pcxl<-obj@pcxl                             # Distance from each population centre to each lake
+  pcxa<-obj@pcxa                             # Angler composition of each population centre
+  axattr<-obj@axattr                         # Angler attributes
+  attrtype<-obj@attr[1,]                     # Attribute type
+  lxattr<-obj@lxattr                         # Lake attributes
+  ncat<-obj@ncat                             # Number of categorical variables
+  nattr<-obj@nattr                           # Number of attractivity variables
+  attrty<-fac2num(obj@attr[1,5:nattr])       # Attribute indexing
+  npc<-obj@npc                               # Number of population centres
+  nl<-obj@nl                                 # Number of lakes
+  na<-obj@na                                 # Number of angler classes
+  nage<-obj@nage                             # Number of modelled fish age classes
+  nst<-obj@nst                               # Number of types of stocked fish
+  lmt<-obj@lm                                # Hierarchical list of r linear models
+  FTroutAng<-obj@FTroutAng                   # Fraction of anglers that are trout anglers
+  lxslev<-obj@lxslev                         # Stocking level of each lake
+  lxstocked<-array(as.integer(lxslev>0),dim(lxslev))  # Vector of stocked lakes
+  couchlev<-obj@couch                        # Precalculated couch effect, if available
+
+  # Array indexing m:management option  s:simulation  p:population centre  l:lake  a:angler class
+  mspla<-as.matrix(expand.grid(1:nman,1:nsim,1:npc,1:nl,1:na))  # manag
+  msla<-mspla[,c(1,2,4,5)]
+  spla<-mspla[,2:5]
+  spl<-mspla[,2:4]
+  mpl<-mspla[,c(1,3,4)]
+  msal<-mspla[,c(1,2,5,4)]
+  mspa<-mspla[,c(1,2,3,5)]
+  sp<-mspla[,2:3]
+  spa<-mspla[,c(2,3,5)]
+  sa<-mspla[,c(2,5)]
+  l<-mspla[,4]
+  sl<-mspla[,c(2,4)]
+  p<-mspla[,3]
+  aaa<-mspla[,5]
+
+  # The distance array
+  dis<-array(NA,dim=c(nman,nsim,npc,nl,na))
+  dis[mspla]<-pcxl[mpl]
+
+  # The gravity of angler types to each lake based on categorical lake attributes
+  msalc<-as.matrix(expand.grid(1:nman,1:nsim,1:na,1:nl,1:length(attrty)))  # master index matrix. management option x sim x angler type x lake x attribute
+  attrp<-array(NA,dim=c(nman,nsim,na,nl,nattr-4))
+
+  latt<-msalc[,c(1,4,5)]                                                   # locate the management option lake x management attribute
+  lcat<-lxattr[latt]                                                       # what is the level of the categorical effect?
+
+  aatt<-cbind(msalc[,c(2,3,5)],lcat)                                       # locate the sim, angler, category by level
+  attrp[msalc]<-axattr[aatt]                                               # what is numerical effect of this level of this category, sim and angler?
+
+  sigattrp<-apply(attrp,1:4,sum)                                           # by man, sim, angler type and lake what does this add up to?
+
+  # --- The gravity due to travel time of anglers in a population centre to different lakes --------------
+  vals<-array(NA,dim=c(nman,nsim,npc,nl,na))
+  x<-as.vector(dis)
+  a<-as.factor(rep(1:na,each=nman*nsim*npc*nl))
+  preddat<-data.frame(a,x)
+  disval<-array(predict(lmt[[3]],newdata=preddat),dim=c(nman,nsim,npc,nl,na))
+
+  accval<-obj@acc                                                        # Lake access metric
+  vals[mspla]<-disval[mspla]+obj@acc_a*accval[sl]+sigattrp[msal]         # Access added to distance calculatioin
+
+  vals2<-array(NA,dim=c(nman,nsim,npc,nl,na))
+  vals2[mspla]<-exp(vals[mspla])      # ignore average catch size indSS,  # add the catch rate effect make this zero in first iteration (ignore size)
+  sig2<-apply(vals2,c(1,2,3,5),sum)   # total attraction across lakes
+
+  if(couch|startE){  # if the couch effect has already been calculated or the IFD iterations are starting from an existing effort distribution
+    E<-obj@eff
+  }else{             # else start from scratch with a guess
+    E<-array(0,dim=c(nman,nsim,npc,nl,na))
+    Ebysz<-obj@lakearea*apply(obj@lxslev[1,,],1,sum)
+    Ebysz<-Ebysz/mean(Ebysz)
+    E[mspla]<-pcsize[sp]*pcxa[spa]*vals2[mspla]/sig2[mspa]*unlist(obj@apr[spa])*FTroutAng[p]*Ebysz[l] # Initial effort calculation
+  }
+
+  Eold<-E           # Store the old effort calculation (before update)
+
+  # --- Store convergence data ---------------------------------
+  conv[,1]<-E[convind]
+  if(dim(E)[3]>1)Econv[,1]<-apply(E[1,1,,,],2,sum)
+  if(dim(E)[3]==1)Econv[,1]<-apply(E[1,1,,,],1,sum)
+
+
+  # --- Fishing mortality rate calculation ---------------------
+  #               m s l a subd
+  sigE<-apply(E,c(1,2,4,5),sum)#tomapply(x=E,obj@nmanage,obj@nsim)
+  Fmslat<-as.matrix(expand.grid(1:nman,1:nsim,1:nl,1:na,1:nst))
+  Fmsla<-Fmslat[,c(1,2,3,4)]
+  Fsa<-Fmslat[,c(2,4)]
+  prind<-match("prmort",names(obj@poperr))           # Post release mortality rate
+  inds<-cbind(Fmslat[,2],rep(prind,nrow(Fmslat)),Fmslat[,5])
+  Fl<-Fmslat[,3]
+
+  FF<-FM<-array(0,dim=c(nman,nsim,nl,na,nst))
+  CR<-array(0,dim=c(nman,nsim,nl,na,nst,nage))
+  Rel<-array(0,dim=c(nman,nsim,nl,na))
+  FF[Fmslat]<-sigE[Fmsla]*unlist(obj@aq[Fsa])/obj@lakearea[Fl]
+  FM[Fmslat]<-(1-obj@DR[Fsa])*sigE[Fmsla]*unlist(obj@aq[Fsa])/obj@lakearea[Fl]
+  FFmsl<-apply(FF,1:3,sum)
+  FMmsl<-apply(FM,1:3,sum)
+
+  # ---  Population dynamic calculation ------------------------
+  N<-array(0,dim=c(nman,nsim,nl,nst,nage))  # N over all age classes
+  L<-array(0,dim=c(nman,nsim,nl,nst,nage))  # L over all age classes
+  Dens<-array(0,dim=c(nman,nsim,nl))        # Fish density over all types
+
+  sigM<-obj@Mage/2  #approximation to the mid season survival rate   # change this to a Baranov - doesn't make much difference tho!
+  for(i in 2:nage) sigM[,i,]<-apply(array(obj@Mage[,1:(i-1),],dim=c(nsim,i-1,nst)),c(1,3),sum)+obj@Mage[,i,]/2
+
+  presatage<-array(1,c(nst,nage))
+  presatage[obj@aclass==1,1]<-0
+  presatage[obj@aclass==2,1:2]<-0
+
+  Fmulti<-c(0,0.5,rep(1,obj@nage-2))#c(0,seq(0.5,nage-1.5,length.out=nage-1)) # no fishing mortality rate in age class 0 half in age class 2
+  Fmulti<-cumsum(obj@sel*Fmulti)  # Cumulative F multiplier
+
+  # Some indexing
+  indN<-as.matrix(expand.grid(1:nman,1:nsim,1:nl,1:nst,1:nage))
+  inda2<-indN[,5]
+  indmsl<-indN[,1:3]
+  indsat<-indN[,c(2,5,4)]
+  indta<-indN[,4:5]
+  indmlt<-indN[,c(1,3,4)]
+  indst<-indN[,c(2,4)]
+  indsl<-indN[,2:3]
+  indt<-indN[,4]
+  indMage<-cbind(indN[,2],rep(1,nrow(indN)),indN[,4])
+  indmlt<-indN[,c(1,3,4)]
+  indNl<-indN[,3]
+  indNs<-indN[,2]
+  indmslt<-indN[,1:4]
+  indsa<-indN[,c(2,5)]
+
+  # N initialization
+  N[indN]<-presatage[indta]*obj@lxslev[indmlt]*exp(-Fmulti[inda2]*FMmsl[indmsl]-sigM[indsat])
+  sumN<-apply(N,1:4,sum)
+
+  agemulti<-(1:nage)-0.5 # multiplier for calculating cumulative mortality rate at age
+
+  # growth rate indexing   #gmax alpha beta gamma delta peta theta	prmort
+  gmax<-array(obj@popval[,match("gmax",names(obj@poperr)),],dim=c(nsim,nst))
+  alpha<-array(obj@popval[,match("alpha",names(obj@poperr)),],dim=c(nsim,nst))
+  bet<-array(obj@popval[,match("beta",names(obj@poperr)),],dim=c(nsim,nst))
+  gamm<-array(obj@popval[,match("gamma",names(obj@poperr)),],dim=c(nsim,nst))
+  delta<-array(obj@popval[,match("delta",names(obj@poperr)),],dim=c(nsim,nst))
+  peta<-array(obj@popval[,match("peta",names(obj@poperr)),],dim=c(nsim,nst))
+  thetai<-array(obj@popval[,match("theta",names(obj@poperr)),],dim=c(nsim,nst))
+
+  # Initial density estimate the yearling equivalent
+  Dens<-array(NA,dim=c(nman,nsim,nl,nst))
+  Dens[indmslt]<-(obj@lxslev[indmlt]*(obj@stlen[indt]^2*10^-6)*exp(-obj@Mage[indMage]))/obj@lakearea[indNl]
+  Dens<-apply(Dens,1:3,sum)     # sum dens over all fish for initial calculation
+
+  AA<-(obj@aclass[indt]+agemulti[inda2])*obj@GDD[indsl]*0.001
+
+  # Calculate Growth
+
+  if(GModel=="Lester1"){
+
+    GL<-exp(gmax[indst]-alpha[indst]*log(obj@stwt[indt])*Dens[indmsl]-bet[indst]*log(obj@stwt[indt]))
+    LA<-(GL*obj@stlen[indt]*AA)+obj@stlen[indt]
+    hh = obj@stlen[indt] * GL #exp(gmax[indst]-alpha[indst]*log(obj@stwt[indt])*Dens[indmsl]-bet[indst]*log(obj@stwt[indt]))  #immature growth increment
+    TT<-gamm[indst]*hh^(-delta[indst])-obj@GDD[indsl]*0.001
+    gg<-peta[indst]*hh+thetai[indst]
+    gg[gg>0.99]<-0.99
+
+  }else if(GModel=="Lester2"){
+
+    hh=gmax[indst]*exp(-alpha[indst]*Dens[indmsl]) *obj@GDD[indsl]*10^-3
+    TT=gamm[indst]*hh^-delta[indst]
+    LA<-hh*AA+obj@stlen[indt]
+    gg<-peta[indst]*hh+thetai[indst]
+    gg[gg>0.99]<-0.99
+
+  }else if(GModel=="New Lester"){
+
+    h_T=gmax[indst]*obj@stlen[indt]^bet[indst]*exp(-alpha[indst]*Dens[indmsl])
+    hh=h_T/(obj@GDD[indsl]*0.001)
+    TT=delta[indst]*hh^-gamm[indst]
+    gg<-1.18*(1-exp(-0.2)) # fixed g parameter
+    LA<-hh*AA+obj@stlen[indt]
+
+  }
+
+  Linf<-(3*hh)/gg
+  K<-log(1+gg/3)
+  t0<-TT+log(1-(gg*(hh*TT+obj@stlen[indt])/(3*hh)))/log(1+gg/3)
+  cond2<-t0>(hh*TT+obj@stlen[indt])
+  t0[cond2]<-hh*TT+obj@stlen[indt]
+
+  LA2<-Linf*(1-exp(-K*(AA-t0)))
+  L[indN]<-LA
+  L[indN[AA>TT,]]<-LA2[AA>TT]
+
+  if(!couch|!startE)print(1)
+  flush.console()
+
+  # Catch rate indexing
+  indCR<-as.matrix(expand.grid(1:nman,1:nsim,1:nl,1:na,1:nst,1:nage))
+  CRmsla<-indCR[,1:4]
+  CRa<-indCR[,c(2,4)]
+  CRl<-indCR[,3]
+  CRml<-indCR[,c(1,3)]
+  CRmsl<-indCR[,1:3]
+  CRsat<-indCR[,c(2,4,5)]
+  CRage<-indCR[,6]
+  CRmsltage<-indCR[,c(1:3,5:6)]
+  CRsage<-indCR[,c(2,6)]
+
+  V<-array(0,dim=c(nman,nsim,nl,nst,nage)) # Vulnerable fish at age
+  V[indN]<-N[indN]*obj@sel[indsa]
+  AvS<-apply((L*V)/array(rep(apply(V,1:3,sum),nst*nage),dim=c(nman,nsim,nl,nst,nage)),1:3,sum) # Average size calculation
+
+  # set up size and F modifier (according to take limit) indexing
+  indSZ<-as.matrix(expand.grid(1:nman,1:nsim,1:nl,1:na))
+  SZml<-indSZ[,c(1,3)]
+
+  # set up fishing mortality rate indexing
+  indF<-as.matrix(expand.grid(1:nman,1:nsim,1:nl,1:na,1:nst))
+  indFE<-indF[,1:4]
+  indFs<-indF[,2]
+  indFl<-indF[,3]
+  indFsa<-indF[,c(2,4)]
+  indFmsla<-indF[,1:4]
+
+  take<-matrix(obj@lxattr[,,match('take',names(obj@attr))-(obj@nattr-dim(obj@lxattr)[3])],nrow=nman) # Get the take limit
+
+  for(itn in 2:nits){   # Loop over IFD calculations (same conventions and code as above)
+
+    valsAC<-array(NA,dim=c(nman,nsim,nl,na))
+    CR[indCR]<-(N[CRmsltage]*exp((-Fmulti[CRage]*FMmsl[CRmsl]-sigM[CRsat])/2))/obj@lakearea[CRl]*unlist(obj@aq[CRa])*obj@sel[CRsage]+0.00001  # Catch rate (robustified with small addition)
+    CRsum<-apply(CR,1:4,sum)
+    Rel[CRmsla]<-ppois(obj@BagLim[CRml],CRsum[CRmsla],lower.tail=F) # fraction released
+    valsCR<-array(NA,dim=c(nman,nsim,nl,na))
+
+    for(aa in 1:obj@na){
+
+      RBstk<-1:obj@nst#grep("RB",obj@stnam)
+      x<-as.vector(apply(array(CR[,,,aa,RBstk,],c(nman,nsim,nl,length(RBstk),nage)),1:3,sum))
+      preddatCR<-data.frame(x)
+      valsCR[,,,aa]<-predict(lmt[[2]][[aa]],newdata=preddatCR)
+
+    }
+
+    # Expected crowding ------
+    Esum<-apply(Eold,c(1,2,4),sum)
+    x<-Esum/rep(obj@lakearea,nman*nsim)/90 # guess at effort density for crowding calc
+    nudat<-as.data.frame(cbind(rep(x,na),a<-rep(1:na,each=length(x))))
+    names(nudat)<-c("x","a")
+    nudat$a<-as.factor(nudat$a)
+    pred<-predict(lmt[[1]],newdat=nudat)
+    valsCROW<-array(pred,c(nman,nsim,nl,na))
+
+    # Expected size
+    V[indN]<-N[indN]*obj@sel[indsa]
+    AvSo<-apply((L*V)/array(rep(apply(V,1:3,sum),nst*nage),dim=c(nman,nsim,nl,nst,nage)),1:3,sum)
+
+    valsSZ<-array(NA,dim=c(nman,nsim,nl,na))
+    aa<-as.factor(rep(1:na,each=nman*nsim*nl))
+    x<-rep(AvSo,na)
+    preddatSZ<-data.frame(x/25.4,aa) # convert mm (growth model) to inches (HD)
+    names(preddatSZ)<-c("x","a")
+    valsSZ[indSZ]<-predict(lmt[[4]],newdata=preddatSZ)
+
+    msl2<-mspla[,c(1,2,4)]
+    vals2[mspla]<-exp((valsSZ[msla]+vals[mspla]+valsCR[msla]+valsCROW[msla])/varind)
+    sig2<-apply(vals2,c(1,2,3,5),sum,na.rm=T)   # total attraction across lakes
+
+    if(couch){
+      E[mspla]<-pcsize[sp]*pcxa[spa]*vals2[mspla]/(sig2[mspa]+couchlev[mspa])*FTroutAng[p]*unlist(obj@maxdays[sa])
+    }else{
+      E[mspla]<-pcsize[sp]*pcxa[spa]*vals2[mspla]/sig2[mspa]*unlist(obj@apr[spa])*FTroutAng[p]
+    }
+
+    E[is.na(E)]<-0
+    conv[,itn]<-E[convind]
+    if(dim(E)[3]>1)Econv[,itn]<-apply(E[1,1,,,],2,sum)
+    if(dim(E)[3]==1)Econv[,itn]<-apply(E[1,1,,,],1,sum)
+
+    sigE<-apply(uprat*E+(1-uprat)*Eold,c(1,2,4,5),sum)
+    Eold<-uprat*E+(1-uprat)*Eold
+    FF[indF]<-(sigE[indFE]*unlist(obj@aq[indFsa]))/obj@lakearea[indFl] # total caught
+    FM[indF]<-(1-obj@DR[indFsa])*(1-Rel[indFmsla])*FF[indF]+((1-(1-obj@DR[indFsa])*(1-Rel[indFmsla]))*obj@DD[indFs])*FF[indF] # subject to discard rate DR and baglimit
+
+    FFmsl<-apply(FF,1:3,sum)
+    FMmsl<-apply(FM,1:3,sum)
+
+    N[indN]<-presatage[indta]*obj@lxslev[indmlt]*exp(-sigM[indsat]-Fmulti[inda2]*FMmsl[indmsl])#-sigM[indsat]) # knife-edge vulnerability @ age 1
+
+    Dens<-N*(L^2)*10^-6
+    Dens[indN]<-Dens[indN]/obj@lakearea[indNl]
+    Dens<-apply(Dens,1:3,sum)
+
+    if(GModel=="Lester1"){
+
+      GL<-exp(gmax[indst]-alpha[indst]*log(obj@stwt[indt])*Dens[indmsl]-bet[indst]*log(obj@stwt[indt]))
+      LA<-(GL*obj@stlen[indt]*AA)+obj@stlen[indt]
+      hh = obj@stlen[indt] * GL
+      TT<-gamm[indst]*hh^(-delta[indst])-obj@GDD[indsl]*0.001
+      gg<-peta[indst]*hh+thetai[indst]
+      gg[gg>0.99]<-0.99
+
+    } else if(GModel=="Lester2"){
+
+      hh=gmax[indst]*exp(-alpha[indst]*Dens[indmsl]) *obj@GDD[indsl]*10^-3
+      TT=gamm[indst]*hh^-delta[indst]
+      LA<-hh*AA+obj@stlen[indt]
+      gg<-peta[indst]*hh+thetai[indst]
+      gg[gg>0.99]<-0.99
+
+    } else if(GModel=="New Lester"){
+
+      h_T=gmax[indst]*obj@stlen[indt]^bet[indst]*exp(-alpha[indst]*Dens[indmsl])
+      hh=h_T/(obj@GDD[indsl]*0.001)
+      TT=delta[indst]*hh^-gamm[indst]
+      gg<-1.18*(1-exp(-0.2))
+      LA<-hh*AA+obj@stlen[indt]
+
+    }
+
+    Linf<-(3*hh)/gg
+    K<-log(1+gg/3)
+    trial<-1-(gg*(hh*TT+obj@stlen[indt])/(3*hh))
+    trial[trial<0.2]<-0.2
+    t0<-TT+log(trial)/log(1+gg/3)
+    cond2<-t0>(hh*TT+obj@stlen[indt]) # constraints on t0 from ground truthing workshop Penticton 2015
+    t0[cond2]<-hh*TT+obj@stlen[indt]
+
+    inter<-AA-t0
+    LA2<-Linf*(1-exp(-K*(inter)))
+    L[indN]<-LA
+    L[indN[AA>TT,]]<-LA2[AA>TT]
+
+    if(!quiet)print(itn)
+    flush.console()
+
+  }
+
+  obj@conv<-conv                                # Effort x angler type convergence data
+  obj@Econv<-Econv                              # Effort on lake convergence data
+  obj@U<-vals2                                  # The utility array
+
+  options(warn=1)
+  obj@eff<-E                                    # Expected effort distribution
+  obj@sigeff<-apply(obj@eff,c(1,2,4),sum)       # Sum effort over manage, sim and lake
+  obj@avs<-AvSo                                 # Average size
+  obj@cr<-apply(CR,1:4,sum)/4                   # Catch rate per hour (4 hours per day mean)
+  obj<-calcCB(obj)                              # Cost / benefit calculation
+  obj                                           # Return updated landscape object
+
+}

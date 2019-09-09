@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568047125715.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1371024607",
+    "id" : "74EFD37",
+    "lastKnownWriteTime" : 1568069458,
+    "last_content_update" : 1568069458273,
+    "path" : "C:/Users/tcarruth/Dropbox/Trout lakes/PrelimLarge/Source.r",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "929,33",
+        "scrollLine" : "910"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,84 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Step 6. Extrapolate fits from regional experimental lakes to larger BC model ===================================
+#
+# In this script, the fitted parameters of the experimental lakes object are copied to the full landscape. There
+# is the option of also doing some fitting of discard rates and accessibility for all lakes
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+I_have_an_hour = TRUE                                                  # Time available for optimization
+
+# --- Load fitted experimental lakes landscape object (34 lakes, 8 population centres) ----------------------------
+
+load(file='./Out/Landscape/Landscape_Step5')                           # Load a recent full landscape model
+obj_exp<-obj                                                           # Copy loaded obj to obj_exp
+
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.2    # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-300      # The number of IFD iterations
+
+
+# --- Load larger landscape object before subsetting in step 4 ----------------------------------------------------
+
+load(file='./Out/Landscape/Landscape_Step3')
+obj<-pc_simp(obj,h=600)                                 # Simplify the population centres for uniqueness based on distance
+summary(obj)                                            # What does it look like
+
+
+# --- Copy over conditioned parameters ----------------------------------------------------------------------------
+
+obj@acc_a<-obj_exp@acc_a          # The affect of accessibility from experimental lakes is assumed to apply to all lakes
+obj@DR<-obj_exp@DR                # The discarding rate from experiemental lakes is assumed to apply to all lakes
+
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8
+varind<-0.05   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+plotconv2(obj,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+Ecomp(obj,lim=c(2,10),nice=F,plottext=F)                                  # How does the effort match up (log-log plot)?
+
+
+# --- Optimize for mean discard rate and average days fished per angler apr ---------------------------------------
+#
+# OPTIONAL: for what its worth (a fraction gain in predictive capacity and model fit) this takes a while (ie 2 hours)
+
+if(I_have_an_hour){
+
+  test<-nlm(opt_DR_acc,p=rep(0,2),stepmax=0.1,gradtol=0.001,steptol=0.01,obj=obj,nits=100,plot=T,
+            varind=varind,uprat=uprat)
+
+  obj<-optEfunB(test$estimate,opt=F,obj=obj,nits=nits,plot=T,
+                varind=varind,uprat=uprat)                # Make a new object using the optimized parameters
+
+}
+
+
+# --- Calculate couch effect ----------------------------------------------------------------------------------------
+
+obj<-calccouch2(obj)
+
+
+# --- Save the object --------------------------------------------------------------------------------------------
+
+save(obj,file='./Out/Landscape/Landscape_Step6')
+
+
+# =============================================================================================================================
+# === END =====================================================================================================================
+# =============================================================================================================================
+
+

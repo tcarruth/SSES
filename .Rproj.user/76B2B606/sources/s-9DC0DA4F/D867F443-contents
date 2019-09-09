@@ -1,0 +1,272 @@
+
+# =======================================================================================================================
+# ==== LSM ground truthing ==============================================================================================
+# =======================================================================================================================
+
+# Optimization for access and regional participation (Region 3 LSM)
+# May 2015 
+
+# TO DO:
+# take text from inspect function
+# don't optimize for catchability, optimize for fishing season so catch rates match up
+
+
+# --- Prerequisites ------------------------------------------------------------------------------------------
+
+Drive<-"G"                                              # Set drive
+setwd(paste(Drive,":/Trout lakes/Prelim",sep=""))       # Set working directory                  
+source("Source.r")                                      # Load the source code
+load(file="Johndata_15_08_16")                          # Load the subsetted data
+graphics.off()                                          # close all plots
+set.seed(1)
+par(mfrow=c(3,2))                                       # Set up a plot
+
+
+
+# --- LSM parameters -----------------------------------------------------------------------------------------
+# Unfortunately you can't optimize for these as at certain values, the model becomes chaotic and there isn't a clear relationship with fit to effort 
+
+uprat<-0.02  # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.4   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+
+
+# --- Basic effort calculation (assuming effort is proportional to population size) -------------------------
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+plotconv(obj,tol=1,totE=T,n=obj@nl)                         # Did it converge (total effort on a lake)?
+Ecomp(obj,lim=c(3,10),plottext=F,nice=F)                                  # How does the effort match up (log-log plot)?
+Ecomp(obj,log=F,nice=F)
+EcompD(obj,log=F,nice=F)
+CRcomp(obj,log=F)                                             # How does catch rate match up?
+AVScomp(obj)                                            # How does average size match up?
+
+#windows()
+#mapeff(obj)                                             # Map the effort
+#mapeff(obj,dens=T)                                      # Map effort / ha
+
+
+# --- Optimize for release rate (discard rate, @DR) and access slope (@acc_a)
+
+test<-nlm(optEfunA,p=rep(0,2), stepmax=0.1,gradtol=0.001,steptol=0.01,obj=obj,nits=nits,plot=T,varind=varind,uprat=uprat)
+
+par(mfrow=c(2,2))
+obj<-optEfun(test$estimate,opt=F,obj=obj,nits=nits,varind=varind,uprat=uprat)                # Make a new object using the optimized parameters
+obj<-calccouch2(obj)                                     # Calculate couch effect
+
+
+# --- Save object
+
+save(obj,file="Johndata_15_08_16 opt")
+load(paste(getwd(),file='/Johndata_15_08_16 opt',sep=""))
+
+objjohn<-obj
+
+
+# --- Load landscape object -------------
+
+load(paste(getwd(),file='/Prelim_15_08_16',sep=""))
+obj<-pc_simp(obj,h=600)                                 # Simplify the population centres for uniqueness based on distance
+summary(obj)                                            # What does it look like
+
+
+# --- Copy over conditioned parameters --------------
+
+obj@acc_a<-objjohn@acc_a
+obj@DR<-objjohn@DR
+
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   
+varind<-0.05   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+par(mfrow=c(2,2))
+plotconv2(obj,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+Ecomp(obj,lim=c(2,10),nice=F,plottext=F)                                  # How does the effort match up (log-log plot)?
+
+
+# --- Optimize for mean discard rate and average days fished per angler apr --------------------
+# Optional: for what its worth (a fraction gain in predictive capacity and model fit) this takes a while (ie 2 hours)
+
+test<-nlm(optEfunB,p=rep(0,2),stepmax=0.1,gradtol=0.001,steptol=0.01,obj=obj,nits=100,plot=T,
+          varind=varind,uprat=uprat)
+
+obj<-optEfunB(test$estimate,opt=F,obj=obj,nits=nits,plot=T,
+              varind=varind,uprat=uprat)                # Make a new object using the optimized parameters
+
+obj<-calccouch2(obj)
+
+save(obj,file="Prelim_15_08_16 opt")
+
+
+
+
+# For analysis of close stocking 100 km or less -----------------------------------------
+
+
+load(file=paste(getwd(),'/Prelim_15_08_16',sep=""))                             # Load a recent full landscape model with all population centres (24) to identify local lakes
+
+mat<-obj@pcxl[1,,]<100
+notrural<-grep("Rural",obj@pcnam,invert=T) 
+rural<-grep("Rural",obj@pcnam) 
+mat[rural,]=FALSE
+cond<-apply(mat,2,sum)>0  # Lakes that are within 100
+save(cond,file="cond100")
+
+lonlim=range(obj@pcx)+c(-1,2)
+latlim=range(obj@pcy)+c(-2,0.5)
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="white",mar=rep(0.3,4),add=F,lwd=1)#mak
+points(obj@lakex,obj@lakey,pch=19,cex=1.5,col='grey')
+points(obj@pcx[notrural],obj@pcy[notrural],cex=3,col='red',lwd=1.5)
+points(obj@lakex[cond],obj@lakey[cond],pch=19,cex=1.5,col='blue')
+
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model with fewer (9) pcs so that it is stable
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+varind<-0.05
+nits<-150     
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+save(obj,file="Comp100k1")
+save(obj,file="CompB100k1")
+
+
+obj@lxslev[1,cond,]<-obj@lxslev[1,cond,]*1.1
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T,startE=T) # Run the LSM to convergence on the IFD
+save(obj,file="Comp100k2")
+
+
+
+
+# For analysis of close stocking 100 km or more ----------------------------------------------------------
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+varind<-0.05
+nits<-250     
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+save(obj,file="CompB100k2")
+
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="white",mar=rep(0.3,4),add=F,lwd=1)#mak
+points(obj@lakex,obj@lakey,pch=19,cex=1.5,col='grey')
+points(obj@lakex[!cond],obj@lakey[!cond],pch=19,cex=1.5,col='blue')
+points(obj@pcx[notrural],obj@pcy[notrural],cex=3,col='red',lwd=1.5)
+
+obj@lxslev[1,!cond,]<-obj@lxslev[1,!cond,]*1.1
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T,startE=T) # Run the LSM to convergence on the IFD
+
+save(obj,file="CompB100k2")
+
+
+
+
+
+# For analysis of increasing trophy lakes ----------------------------------------------------------
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+varind<-0.05
+nits<-250     
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+save(obj,file="Trophy1")
+
+cond<-obj@BagLim[1,]==5
+lakes<-(1:obj@nl)[cond]
+GDD<-obj@GDD[1,lakes]
+toBtrophy<-lakes[order(GDD,decreasing=T)][1:ceiling(sum(cond)*0.2)]
+toBtrophy<-(1:obj@nl)%in%toBtrophy
+
+save(toBtrophy,file='toBtrophy')
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))    
+obj@BagLim[1,toBtrophy]<-2
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+save(obj,file="Trophy2")
+
+
+
+
+
+
+# Dynamic effort redistribution
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+uprat=0.01 # this has to be much smaller as we are looking at tiny changes in effort at the margin, so require a very precise solution                           
+nits<-500  # might as well run this out to a relatively high precision
+obj1<-calceff(obj,nits=nits,varind=varind,uprat=uprat,startE=T)#the LSM to convergence on the IFD
+#plotconv2(obj1,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+
+save(obj1,file="Eredist_before")
+
+mult<-2
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+cond2<-match("KESTREL",obj@longnam)
+obj@lxslev[1,cond2,]<-obj@lxslev[1,cond2,]*mult
+obj2<-calceff(obj,nits=nits,varind=varind,uprat=uprat,startE=T) # Run the LSM to convergence on the IFD
+#plotconv2(obj2,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+#Ecomp(obj1,lim=c(3,10),plottext=F,nice=F)                                  # How does the effort match up (log-log plot)?
+save(obj2,file="Eredist_Kestrel")
+
+ERedist(obj1,obj2,lakeno=cond2,box=1,maxcex=5)
+  
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+cond3<-match("ROCHE",obj@longnam)
+obj@lxslev[1,cond3,]<-obj@lxslev[1,cond3,]*mult
+obj3<-calceff(obj,nits=nits,varind=varind,uprat=uprat,startE=T) # Run the LSM to convergence on the IFD
+#plotconv2(obj2,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+#Ecomp(obj2,lim=c(3,10),plottext=F,nice=F)                                  # How does the effort match up (log-log plot)?
+save(obj3,file="Eredist_Roche")
+
+ERedist(obj1,obj3,lakeno=cond3,box=1,maxcex=5)
+  
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model
+cond4<-match("SHERIDAN",obj@longnam)
+obj@lxslev[1,cond4,]<-obj@lxslev[1,cond4,]*mult
+obj4<-calceff(obj,nits=nits,varind=varind,uprat=uprat,startE=T) # Run the LSM to convergence on the IFD
+#plotconv2(obj2,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+#Ecomp(obj2,lim=c(3,10),plottext=F,nice=F)                                  # How does the effort match up (log-log plot)?
+save(obj4,file="Eredist_Sheridan")
+
+ERedist(obj1,obj4,lakeno=cond4,box=1,maxcex=5)
+  
+
+
+# Stocking rate increase on the margin (takes  while since converging on ~600 management options simultaneously ---------------------------------------------------
+
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   
+varind<-0.05   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+npack<-10
+packets<-split(1:obj@nl, sort((1:obj@nl)%%npack))
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep="")) 
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+obj<-calcCB(obj)
+save(obj,file="Prelim_15_08_16 opt CB 0")
+
+
+for(i in 2:npack){
+  
+  load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep="")) 
+  
+  objmulti<-replic8(obj,length(packets[[i]]))   # create a large landscape object with as many management options as there are lakes
+  ind<-as.matrix(expand.grid(1:length(packets[[i]]),1:6)) # for each lake increase stocking level by 10% 
+  ind<-cbind(ind[,1],packets[[i]][ind[,1]],ind[,2])
+  objmulti@lxslev[ind]<-objmulti@lxslev[ind]*1.1
+
+  objmulti<-calceff(objmulti,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+  plotconv2(objmulti,totE=T,n=50)                         # Did it converge (total effort on a lake)?
+
+  objmulti<-calcCB(objmulti) # calculate cost/benefits
+
+  save(objmulti,file=paste("Prelim_15_08_16 opt CB",i))
+  
+}

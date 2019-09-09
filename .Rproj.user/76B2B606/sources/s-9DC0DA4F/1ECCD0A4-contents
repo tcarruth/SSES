@@ -194,21 +194,3 @@ pc_simp<-function(obj,h=1000){
 }
 
 
-#' Calculate couch effect (the attractivity of other activities given a fitted landscape object)
-#'
-#' For all landscape characteristics that are uncertain, these parameters are sampled.
-#'
-#' @param obj an object of class 'Landscape'
-#' @author T. Carruthers
-#' @export calccouch2
-calccouch2<-function(obj){
-  mspa<-as.matrix(expand.grid(1:obj@nmanage,1:obj@nsim,1:obj@npc,1:obj@na))
-  U<-apply(obj@U,c(1,2,3,5),sum) # sum of utility across lakes
-  maxdays<-as.matrix(obj@maxdays)
-  couch<-array(NA,c(obj@nmanage,obj@nsim,obj@npc,obj@na))
-  couch[mspa]<-((U[mspa]*unlist(maxdays[mspa[,c(2,4)]]))/as.numeric(obj@apr))-U[mspa]
-  obj@couch=couch
-  obj
-}
-
-
