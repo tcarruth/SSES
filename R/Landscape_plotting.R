@@ -233,6 +233,44 @@ ttp<-function (x, y, words, cex = 1, pcex=1,pcol='red',new = TRUE, show.lines = 
        words, cex = cex, ...)
 }
 
+#' Text positioning for word cloud (just data points)
+#'
+#' @param x vector x coordinates
+#' @param y vector of y coordinates
+#' @param works character vector of words to plot
+#' @param cex font size
+#' @param pcex point size
+#' @param pcol color of points
+#' @param new logical, new plot needed?
+#' @param show.lines logical, should lines between points and text be included
+#' @param lwd postive real number, the width of the lines
+#' @param lcol character, the color of the lines
+#' @author T. Carruthers
+#' @export ttp
+ttp_pos<-function (x, y, words, cex = 1, pcex=1,pcol='red',new = TRUE, show.lines = TRUE,lwd=1,lcol='black',
+                   ...)
+{
+  #if (new)  plot(x, y, type = "n", ...)
+  lay <- wordlayout(x, y, words, cex, ...)
+  if (show.lines) {
+    for (i in 1:length(x)) {
+      xl <- lay[i, 1]
+      yl <- lay[i, 2]
+      w <- lay[i, 3]
+      h <- lay[i, 4]
+      #if (x[i] < xl || x[i] > xl + w || y[i] < yl || y[i] >
+      #yl + h) {
+      #points(x[i], y[i], pch = 16, col = pcol, cex = pcex)
+      nx <- xl + 0.5 * w
+      ny <- yl + 0.5 * h
+      lines(c(x[i], nx), c(y[i], ny), col = lcol,lwd=lwd)
+      #}
+    }
+  }
+  cbind(lay[, 1] + 0.5 * lay[, 3], lay[, 2] + 0.5 * lay[, 4])
+}
+
+
 #' Plot a map of landscape effort
 #'
 #' @param obj an object of class 'Landscape'
@@ -369,5 +407,33 @@ UTplot<-function(ED,aclassnam,popnams,lonlim,latlim,obj,region_list,cex.axis=0.8
 
 }
 
+#' Make a standard color transparent
+#'
+#' @param someColor character string, a color
+#' @param alpha percentage, the transparency of the color
+#' @author T. Carruthers
+#' @export makeTransparent
+makeTransparent<-function(someColor, alpha=100)
+{
+  newColor<-col2rgb(someColor)
+  apply(newColor, 2, function(curcoldata){rgb(red=curcoldata[1], green=curcoldata[2],
+                                              blue=curcoldata[3],alpha=alpha, maxColorValue=255)})
+}
 
 
+
+
+
+sdconv <- function(m,sd)(log(1+((sd^2)/(m^2))))^0.5
+
+mconv<-function(m,sd)log(m)-0.5*log(1+((sd^2)/(m^2)))
+
+alphaconv<-function(m,sd)m*(((m*(1-m))/(sd^2))-1)
+
+betaconv<-function(m,sd)(1-m)*(((m*(1-m))/(sd^2))-1)
+
+trlnorm<-function(reps,mu,cv) {
+  if (all(is.na(mu))) return(rep(NA, reps))
+  if (all(is.na(cv))) return(rep(NA, reps))
+  return(rlnorm(reps,mconv(mu,mu*cv),sdconv(mu,mu*cv)))
+}

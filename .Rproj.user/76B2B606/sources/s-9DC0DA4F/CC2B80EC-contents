@@ -1,0 +1,147 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Analysis 3. The expected social outcomes of the SSES ====================================================
+#
+# In this script, numerical optimization is used to find parameters for discard rate, marginal accessibility and
+# regional participation rate
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+
+# --- Load latest complete landscape object (584 lakes, 24 population centres) ------------------------------------
+
+load(file='./Out/Landscape/Landscape_Step6')                           # Load a recent full landscape model
+template<-obj                                                          # Keep a template
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-1      # Experiment with this - value 1 produces the exact utility of the landscape in the U slot so better for graphing in b
+nits<-300      # The number of IFD iterations
+
+
+# --- Calculate IFD for base case landscape -----------------------------------------------------------------------
+
+obj_base<-calceff(template,nits=nits,varind=varind,uprat=uprat,couch=F) # Run the LSM to convergence on the IFD
+
+
+# --- Calculations ------------------------------------------------------------------------------------------------
+
+load(file="./Data/region_list")        # List of region polygons
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+
+cond<-1:obj@npc
+lonlim=range(obj@pcx[cond])+c(-1.5,1.5)
+latlim=range(obj@pcy[cond])+c(-2,1.5)
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.9,-112),c(48.95,48.95),col="white",lwd=2)
+
+availE<-obj_base@FTroutAng*obj_base@pcxa[1,,]*obj_base@pcsize[1,]# post filtering . pop nos/2
+UT<-apply(obj_base@U[1,1,,,],c(1,3),sum)
+
+
+maxps<-4
+Ebypc<-apply(obj_base@eff[1,1,,,],c(1,3),sum)/1000
+
+ylimy<-c(0,max(Ebypc))
+locs<-pretty(seq(ylimy[1],ylimy[2]*1.1,length.out=5))
+acol<-c("grey","orange","green","blue")
+popnams<-obj@pcnam
+for(i in 1:length(popnams)){
+
+  if(class(strsplit(popnams[i],"_"))=='list')popnams[i]<-strsplit(popnams[i],"_")[[1]][1]
+
+}
+
+
+oldnam<-c("PrinceGeorge","FortStJohn","Region5Rural","Region6Rural","Region7ORural")
+newnam<-c("Prince George","Fort St John","Cariboo Rural","Skeena Rural","Omineca Rural")
+popnams[match(oldnam,popnams)]<-newnam
+
+set.seed(2)
+sz<-2.2
+out<-ttp_pos(obj@pcx[cond],obj@pcy[cond],rep("HH",length(cond)),cex=5.5,lwd=2.5,lcol="dark grey")
+
+xlims<-cbind(out[,1]-sz/1.8,out[,1]+sz/1.8)#cbind(obj@pcx,obj@pcx+1)
+ylims<-cbind(out[,2]-sz/3.5,out[,2]+sz/3.5)#cbind(obj@pcy,obj@pcy+1)
+
+
+for(i in 1:nrow(xlims)){
+
+  subplot({
+    border<-rep('black',4)
+    border[Ebypc[i,]==0]<-'NA'
+    barplot(Ebypc[i,],axes=F,ylim=ylimy,col=acol,xlab="",ylab="",main="",border=border)
+    axis(2,locs,locs,cex.axis=0.7,padj=1)
+    mtext(popnams[i],3,line=-0.1,cex=0.7,adj=0.1)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+
+}
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=as.character(y),cex.axis=0.8)
+mtext("(a) Effort (1000 days)",side=3,line=-1,adj=0.02,cex=0.85)
+
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.9,-112),c(48.95,48.95),col="white",lwd=2)
+
+
+ylimy<-c(0,max(UT))
+locs<-pretty(seq(ylimy[1],ylimy[2]*1.1,length.out=5))
+legend('topright',legend=aclassnam,fill=acol,title='Angler class',cex=0.85)
+
+
+for(i in 1:nrow(xlims)){
+  subplot({
+    border<-rep('black',4)
+    border[UT[i,]==0]<-'NA'
+    barplot(UT[i,],axes=F,ylim=ylimy,col=acol,xlab="",ylab="",main="",border=border)
+    axis(2,locs,locs,cex.axis=0.7,padj=1)
+    mtext(popnams[i],3,line=-0.1,cex=0.7,adj=0.1)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+}
+
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+
+axis(2,at=y,labels=NA,cex.axis=0.8)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=2,outer=T,font=2,cex=1)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=1.5,outer=T,font=2,cex=1)
+
+mtext("(b) Utility",side=3,line=-1,adj=0.02,cex=0.85)
+
+
+
+
+
+
+# ==================================================================================================================================
+# === End of script ================================================================================================================
+# ==================================================================================================================================
+

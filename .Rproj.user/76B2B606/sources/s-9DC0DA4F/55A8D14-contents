@@ -1,0 +1,56 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Analysis 5. Stochastic landscape simulation ============================================================
+#
+# Error is added to all landscape variables to evaluate the impact on outcomes
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+
+# --- Load latest complete landscape object (584 lakes, 24 population centres) ------------------------------------
+
+load(file='./Out/Landscape/Landscape_Step6')                           # Load a recent full landscape model
+
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.1    # Experiment with this - value 1 produces the exact utility of the landscape in the U slot so better for graphing in b
+nits<-200      # The number of IFD iterations
+
+
+# --- Replicate the landscape object into various management regimes ----------------------------------------------
+
+obj_stoch<-replic8(obj,nsim=5)
+
+
+# --- Calculations ------------------------------------------------------------------------------------------------
+
+obj_stoch<-calceff(obj_stoch,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD for all management regimes
+
+
+# --- Plot outcomes
+
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+TotalE<-apply(obj_rep@eff,1,sum)
+deltaE<-TotalE-min(TotalE)
+barplot(deltaE,names.arg=lakenams,main="Additional effort relative to minimum")
+barplot(obj_rep@CB[,1],names.arg=lakenams,main="Effort per $ stocking") # cost / B
+
+
+
+# ==================================================================================================================================
+# === End of script ================================================================================================================
+# ==================================================================================================================================
+

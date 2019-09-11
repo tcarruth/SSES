@@ -1,0 +1,61 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Analysis 4. A lake by lake increase in stocking ============================================================
+#
+# For six lakes in turn, a 10% increase in stocking is investigated
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+
+# --- Load latest complete landscape object (584 lakes, 24 population centres) ------------------------------------
+
+load(file='./Out/Landscape/Landscape_Step6')                           # Load a recent full landscape model
+template<-obj                                                          # Keep a template
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.1    # Experiment with this - value 1 produces the exact utility of the landscape in the U slot so better for graphing in b
+nits<-300      # The number of IFD iterations
+
+
+# --- Replicate the landscape object into various management regimes ----------------------------------------------
+
+
+lakenams<-c('ROCHE','WATCH','SHERIDAN','BUCK','TOPAZ LAKE','LILLIAN') # lakes to have increased stocking on
+nmanage<-length(lakenams)               # number of management regimes
+obj_rep<-replic8(obj,nmanage)           # expand object to 6 management regimes
+stockmult<-array(1,dim(obj_rep@lxslev)) # default 100% of original stocks for each management option, lake and stocking type
+for(i in 1:nmanage)stockmult[i,match(lakenams[i],obj_rep@longnam),]<-1.1 # 10% increase for each lake in turn
+obj@lxslev<-obj@lxslev*stockmult        # increase by 10%
+
+
+# --- Calculations ------------------------------------------------------------------------------------------------
+
+obj_rep<-calceff(obj_rep,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD for all management regimes
+
+# --- Plot outcomes
+
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+TotalE<-apply(obj_rep@eff,1,sum)
+deltaE<-TotalE-min(TotalE)
+barplot(deltaE,names.arg=lakenams,main="Additional effort relative to minimum")
+barplot(obj_rep@CB[,1],names.arg=lakenams,main="Effort per $ stocking") # cost / B
+
+
+
+# ==================================================================================================================================
+# === End of script ================================================================================================================
+# ==================================================================================================================================
+

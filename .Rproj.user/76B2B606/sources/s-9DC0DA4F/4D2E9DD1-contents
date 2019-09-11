@@ -1,0 +1,181 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Analysis 2. The expected ecological outcomes of the SSES ====================================================
+#
+# In this script, numerical optimization is used to find parameters for discard rate, marginal accessibility and
+# regional participation rate
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+
+# --- Load latest complete landscape object (584 lakes, 24 population centres) ------------------------------------
+
+load(file='./Out/Landscape/Landscape_Step6')                           # Load a recent full landscape model
+template<-obj                                                          # Keep a template
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.05   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-300      # The number of IFD iterations
+
+
+# --- Calculate IFD for base case landscape -----------------------------------------------------------------------
+
+obj_base<-calceff(template,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+
+
+# --- Calculations ------------------------------------------------------------------------------------------------
+
+require(SDMTools)
+require(sp)
+
+load(file="./Data/region_list")        # List of region polygons
+load(file="./Data/region_names")       # Their names
+load(file="./Data/region_centroid")    # Their mid point
+region_centroid[8,]<-c(-122,56.5)      # move centroid for graphing purposes
+region_centroid[7,1]<-(-118.8)         # move centroid for graphing purposes
+
+nreg<-length(region_list)
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+lake_region<-rep(NA,obj@nl)     # blank list nlakes long of their respective region
+
+for(r in 1:length(region_list)){ # assign region to lake
+
+  out<-pnt.in.poly(cbind(obj@lakex,obj@lakey),region_list[[r]])
+  lake_region[out$pip==1]<-r
+
+}
+
+lonlim=range(region_centroid[,1])+c(-1,1)
+latlim=range(region_centroid[,2])+c(-1.5,0.5)
+
+acol<-c("grey","orange","green","blue")
+
+colprint<-T
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+
+# --- Panel A -------------------------------------------------------------------------------
+cond<-1:obj@npc
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.7,-112),c(49,49),col="white",lwd=1.2)
+
+availE<-obj@FTroutAng*obj@pcxa[1,,]*obj@pcsize[1,]# post filtering . pop nos/2
+UT<-(apply(obj@eff[1,1,,,],c(1,3),sum)/availE)
+UT[is.na(UT)]<-0
+maxps<-4
+UbyL1<-apply(obj@eff[1,1,,,],2,sum)^0.5
+UbyL<-UbyL1/max(UbyL1)
+cexy<-0.1+UbyL*maxps
+
+points(obj@lakex,obj@lakey,pch=19,cex=cexy,col=makeTransparent("grey25",90))
+
+x<-(-200:200)
+y<-(-200:200)
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=as.character(y),cex.axis=0.8)
+
+legeff<-seq(0,12000,length.out=4)[2:4]
+legcex<-0.1+legeff/max(legeff)*maxps
+
+legend('topright',legend=legeff,pch=19,col=makeTransparent("grey25",90),title="Effort (days)",pt.cex=legcex)
+mtext("(a)",side=3,line=-1,adj=0.02,cex=0.9)
+
+
+
+# --- Panel B --------------------------------------------------------------------------------
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:nreg)polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+
+lines(c(-122.7,-112),c(49,49),col="white",lwd=1.2)
+
+sz<-2.5
+set.seed(1)
+out<-ttp_pos(region_centroid[,1],region_centroid[,2],rep("HH",8),cex=6,lcol=NA,lwd=1.5)
+
+xlims<-cbind(out[,1]-sz/2,out[,1]+sz/2)#cbind(obj@pcx,obj@pcx+1)
+ylims<-cbind(out[,2]-sz/6,out[,2]+sz/6)#cbind(obj@pcy,obj@pcy+1)
+
+#ylimy<-c(0,max(UT))
+locs<-pretty(seq(ylims[1],ylims[2]*1.1,length.out=3))
+locs<-c(0,200,400,600)
+
+legend('topright',legend=c("Catch rate (fish/hour)","Length of fish (mm)"),cex=0.75, text.col=c('black','dark grey'),border='white')
+xlim1<-c(0,0.6)
+breaks1<-seq(xlim1[1],xlim1[2],length.out=20)
+
+sigeff<-apply(obj@eff[1,1,,,],2:3,sum)
+
+xx<-seq(xlim1[1],xlim1[2],length.out=4)
+for(i in 1:nrow(xlims)){
+  subplot({
+
+    cond<-(1:obj@nl)[lake_region==i]
+    cr<-NULL
+    sz<-NULL
+
+    for(l in cond){
+      for(a in 1:obj@na){
+        eff<-ceiling(sigeff[l,a])
+        cr<-c(cr,rep(obj@cr[1,1,l,a],eff))
+        sz<-c(sz,rep(obj@avs[1,1,l],eff))
+      }
+    }
+
+    cr<-cr[cr<xlim1[2]] # Upper limit on plotted CR
+
+    hist(cr,col='black',breaks=breaks1,axes=F,xlim=xlim1,ylab="",xlab="",main="")
+    axis(1,xx,xx,cex.axis=0.6,font.axis=2,padj=-3.5,tck=-0.03)
+
+    sz<-(sz-200)/300*0.6 # rescale so it can be plotted over CR
+    sz<-sz[sz>xlim1[1]]
+    sz<-sz[sz<xlim1[2]] # upper limit on plotted sz
+
+    hist(sz, col=rgb(0.5,0.5,0.5,0.7),breaks=breaks1,add=T,lty=0)
+    axis(1,xx,(2:5)*100,font.axis=2,col.axis='dark grey',cex.axis=0.6,padj=-2,tck=-0.03)
+    abline(v=mean(cr),lty=3,lwd=1.5)
+    abline(v=mean(sz),lty=3,col=rgb(0.5,0.5,0.5,0.75),lwd=1.5)
+
+    mtext(region_names$REG_NAME[i],3,line=-0.1,cex=0.75,adj=0.1)
+    legend('topright',legend=c(round(mean(cr),2),ceiling(200+(mean(sz)/0.6)*300)),text.col=c('black',rgb(0.5,0.5,0.5,0.75)),bty='n',cex=0.6)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+
+}
+
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=NA,cex.axis=0.8)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=2.2,outer=T,font=2,cex=1)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=1.5,outer=T,font=2,cex=1)
+
+mtext("(b)",side=3,line=-1,adj=0.02,cex=0.9)
+
+
+
+# ==================================================================================================================================
+# === End of script ================================================================================================================
+# ==================================================================================================================================
+

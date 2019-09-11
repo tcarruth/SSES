@@ -1,0 +1,43 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Step 1. Install SES package ====================================================================================
+#
+# In this script, package dependencies are loaded and the development package is downloaded from github
+#
+#
+# --- 1a Dependencies  -----------------------------------------------------------------------------------------------
+
+if (!require('maps'))    install.packages('maps',repos='http://cran.stat.sfu.ca')
+if (!require('mapdata')) install.packages('mapdata',repos='http://cran.stat.sfu.ca')
+if (!require('mapplots'))    install.packages('mapplots',repos='http://cran.stat.sfu.ca')
+if (!require('animation')) install.packages('animation',repos='http://cran.stat.sfu.ca')
+if (!require('vegan'))install.packages('vegan',repos='http://cran.stat.sfu.ca')
+if (!require('wordcloud'))install.packages('wordcloud',repos='http://cran.stat.sfu.ca')
+if (!require('devtools'))install.packages('devtools',repos='http://cran.stat.sfu.ca')
+if (!require('TeachingDemos'))install.packages('TeachingDemos',repos='http://cran.stat.sfu.ca')
+
+
+# --- Install SSES R package from Github repo ------------------------------------------------------------------------------
+
+devtools::install_github("tcarruth/SSES")
+
+
+# Load required packages ---------------------------------------------------------------------------------------------
+
+library(maps)
+library(mapdata)
+library(mapplots)
+library(animation)
+library(vegan)
+library(wordcloud)
+library(TeachingDemos)
+
+
+# ==================================================================================================================================
+# === End of script ================================================================================================================
+# ==================================================================================================================================

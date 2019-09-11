@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568138134958.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "55A8D14",
+    "lastKnownWriteTime" : 1568146829,
+    "last_content_update" : 1568158629272,
+    "path" : "C:/Users/tcarruth/Dropbox/SSES/Example analyses/Analysis 5 - Stochastic simulation.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "39,0",
+        "scrollLine" : "14",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

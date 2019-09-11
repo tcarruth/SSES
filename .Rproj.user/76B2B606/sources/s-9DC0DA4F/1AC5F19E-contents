@@ -1,0 +1,82 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Step 5. Fit the SSES landscape model ===========================================================================
+#
+# In this script, numerical optimization is used to find parameters for discard rate, marginal accessibility and
+# regional participation rate
+#
+#
+# --- Prerequisites  ----------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+i_have_5_mins=T                                                        # How much computation do you want to do?
+i_have_an_hour=T                                                       # How much computation do you want to do?
+
+
+# --- Load experimental lakes landscape object (34 lakes, 8 population centres) -----------------------------------
+
+load(file='./Out/Landscape/Landscape_Step4')                           # Load a recent landscape model
+
+
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+
+uprat<-0.015   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.1    # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+nits<-300      # The number of IFD iterations
+
+
+# --- accessibility and discard rate optimization -----------------------------------------------------------------
+
+if(i_have_5_mins){
+
+  test<-nlm(opt_DR_acc,p=rep(0,2), stepmax=0.1,gradtol=0.001,steptol=0.01,obj=obj,nits=nits,plot=T,varind=varind,uprat=uprat)
+  obj<-opt_DR_acc(test$estimate,opt=F,obj=obj,nits=nits,varind=varind,uprat=uprat)            # Make a new object using the optimized parameters
+
+}
+
+
+# --- regional participation rate optimization -------------------------------------------------------------------
+#
+# Note this is necessary as we have varying effort on the landscape - everytime we change the size of the
+# landscape we need to revaluate participation rate (mean days fished) to make sure total effort is of the
+# correct magnitude
+
+if(i_have_an_hour){
+
+  test<-optim(rep(0,obj@npc),opt_apr,method="L-BFGS-B",lower=rep(log(0.1),obj@npc),upper=rep(log(10),obj@npc),
+            obj=obj,nits=nits,control=list(maxit=250,ndeps=rep(0.4,obj@npc)),plot=T,
+            varind=varind,uprat=uprat)
+
+  obj<-opt_apr(test$par,opt=F,obj=obj)                   # Make a new object using the optimized parameters
+  obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat)  # Run the LSM to convergence on the IFD
+  plotconv(obj,tol=1,totE=F)                             # Did it converge (total effort on a lake)?
+  Ecomp(obj,log=T)                                       # How does the effort match up (log-log plot)?
+
+}
+
+
+# --- Calculate Couch effect ------------------------------------------------------------------------------------
+
+obj<-calccouch2(obj)                                     # Calculate couch effect from fitted IFD effort
+
+
+# --- Save the object --------------------------------------------------------------------------------------------
+
+save(obj,file='./Out/Landscape/Landscape_Step5')
+
+
+# =============================================================================================================================
+# === END =====================================================================================================================
+# =============================================================================================================================
+
+
+
+
+
