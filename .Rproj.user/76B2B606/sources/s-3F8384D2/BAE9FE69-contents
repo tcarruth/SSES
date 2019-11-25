@@ -1,0 +1,137 @@
+# ====================================================================================================================
+# === Spatial Social Ecological Systems   ============================================================================
+# ====================================================================================================================
+#
+# Tom Carruthers UBC
+# SSES version June 2019
+#
+# === Step 4. Subset and simplify the SSES landscape model for John's experimental lakes =============================
+#
+#
+# --- 4a Prerequisites  ------------------------------------------------------------------------------------------
+
+library(SSES)                                                          # Load the library
+setwd("C:/Users/tcarruth/Dropbox/SSES")                                # Set working directory
+set.seed(1)                                                            # Set a random seed (to ensure reproducibility)
+
+
+# --- Load latest complete landscape object (584 lakes, 24 population centres) -----------------------------------
+
+load(file='./Out/Landscape/Landscape_Step3')                           # Load a recent full landscape model
+
+
+# --- Load John's experimental lake dataset ----------------------------------------------------------------------
+
+subs<-read.csv("./Data/johnlakes.csv",header=T)                        # Subset of experimental lakes
+
+
+# --- Subset the landscape model ---------------------------------------------------------------------------------
+
+obj<-Lsub(obj,ind=match(unique(subs$WBID),obj@lakenam)) # Subset
+summary(obj)                                            # What does it look like?
+
+
+# --- We now have fewer lakes and thus less contrast in the lake x population centre distance matrix -------------
+
+obj<-pc_simp(obj,h=850)                                 # Simplify the population centres for identifiability
+summary(obj)                                            # What does it look like
+
+
+# --- Add real effort, catch rate and length observations to the model -------------------------------------------
+
+# Effort ---
+
+cond<-subs$Year%in%(2009:2012)
+obseff<-aggregate(subs$Effort[cond], by=list(subs$WBID[cond]),mean,na.rm=T) # Mean effort of the subset
+obseff2<-rep(NA,nrow(obseff))
+obseff2[match(obseff$Group.1,obj@lakenam)]<-obseff[,2]          # Reordered to match LS object
+obseff2<-obseff2*obj@lakearea/4                                 # Convert to annual days over entire lake
+obj@exeff<-matrix(obseff2,nrow=1)                               # Add real effort to the LS object
+
+toteff<-sum(obseff2)                                            # Total observed effort
+predeff<-sum(obj@pcsize[1,]*obj@apr[1,,]*obj@FTroutAng*obj@pcxa[1,,]) # Total predicted effort
+obj@apr<-obj@apr*toteff/predeff                             # Match annual effort in the LSM model
+
+# Catch rate ---
+
+obscr<-aggregate(subs$predCPUE[cond], by=list(subs$WBID[cond]),mean,na.rm=T)# Mean catch rate of the subset
+obscr2<-rep(NA,nrow(obscr))
+obscr2[match(obscr$Group.1,obj@lakenam)]<-obscr[,2]             # Reordered to match LS object
+obj@excr<-matrix(obscr2,nrow=1)                                 # Add real effort to the LS object
+
+# Length ---
+
+obsavs<-aggregate(subs$Mean_Length_250_GN[cond], by=list(subs$WBID[cond]),mean,na.rm=T) # Mean average length of the subset
+obsavs2<-rep(NA,nrow(obsavs))
+obsavs2[match(obsavs$Group.1,obj@lakenam)]<-obsavs[,2]          # Reordered to match LS object
+obj@exavs<-matrix(obsavs2,nrow=1)                               # Add real effort to the LS object
+
+# Stocking levels ---
+
+mustk<-apply(subs[cond,14:16],1,mean)
+stl<-aggregate(mustk,by=list(subs$WBID[cond]),mean,na.rm=T)
+stl2<-rep(NA,nrow(stl))
+stl2[match(stl$Group.1,obj@lakenam)]<-stl[,2]             # Reordered to match LS object
+obj@lxslev<-array(0,dim=c(obj@nmanage,obj@nl,obj@nst))
+obj@lxslev[1,,match("t2NYE",obj@stnam)]<-stl2*obj@lakearea
+#obj@lxslev[1,match("PAT LAKE",obj@longnam),]<-c(500,0,0,4500)
+
+
+# Access and Facilities ---
+
+# vivian and Dominic lakes have facilities that are effectively shared by 4 or more other lakes
+subs[subs$Lake=="Vivian",31:32]<-subs[subs$Lake=="Vivian",31:32]/4
+subs[subs$Lake=="Dominic",31:32]<-subs[subs$Lake=="Dominic",31:32]/4
+
+cond<-match(obj@lakenam,subs$WBID)
+
+#acc<--(subs$Distance_on_gravel_road[cond]/55+
+#         subs$Distance_on_4WD_road[cond]/15+subs$Foot_access_distance[cond]/3000)
+
+acc<-exp(-subs$Distance_on_gravel_road[cond]/55)*
+  exp(-subs$Distance_on_4WD_road[cond]/15)*
+  exp(-subs$Foot_access_distance[cond]/3000)*
+  (subs$Num_campsites[cond]+subs$Num_Lodge_beds[cond]) # accessibility calculation
+
+acc<-acc-mean(acc)                     # standardization to mean = 0
+acc<-acc/sd(acc)                       # standardization to sd = 1
+obj@acc<-matrix(acc,nrow=1)            # assign to object
+cbind(obj@acc[1,],obj@longnam)         # what the accessibility score looks like
+
+fac<- (subs$Num_campsites[cond]+
+         subs$Num_Lodge_beds[cond])    # facilities calculation
+
+fac<-fac-mean(fac)                     # standardization to mean = 0
+fac<-fac/sd(fac)                       # standardization to sd = 1
+obj@fac<-matrix(fac,nrow=1)            # assign to object
+
+
+# --- Initial guesses at key parameters
+
+obj@acc_a<-1.15                        # Slope in access effect contribution to utility
+obj@DR<-matrix(rep(0.6,obj@na),nrow=1) # Discarding rate
+
+
+# --- Save the object --------------------------------------------------------------------------------------------
+
+save(obj,file='./Out/Landscape/Landscape_Step4')
+
+
+# =============================================================================================================================
+# === END =====================================================================================================================
+# =============================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

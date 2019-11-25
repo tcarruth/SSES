@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574716026215.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "42FCDA91",
+    "lastKnownWriteTime" : 1568159391,
+    "last_content_update" : 1568159391,
+    "path" : "C:/Users/tcarruth/Dropbox/SSES/Step 5 Fit Landscape.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "39,0",
+        "scrollLine" : "18"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

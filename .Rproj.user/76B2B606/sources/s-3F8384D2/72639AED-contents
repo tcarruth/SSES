@@ -260,6 +260,11 @@ replic8<-function(obj,nmanage=NA,nsim=NA){ # replicates the object over multiple
     obj@popval<-array(rep( obj@popval,each=nsim),dim=c(nsim,dim( obj@popval)[2:3]))
     obj@Mage<-array(rep(  obj@Mage,each=nsim),dim=c(nsim,dim(  obj@Mage)[2:3]))
     obj@acc<-array(rep(obj@acc,each=nsim),dim=c(nsim,nl))
+    obj@DR<-array(rep(obj@DR,each=nsim),dim=c(nsim,na))
+    obj@sel<-array(rep(obj@sel,each=nsim),dim=c(nsim,nage))
+    obj@DD<-rep(obj@DD,nsim)
+    obj@maxdays<-array(rep(obj@maxdays,each=nsim),dim=c(nsim,na))
+
 
 
   }else{
@@ -267,6 +272,63 @@ replic8<-function(obj,nmanage=NA,nsim=NA){ # replicates the object over multiple
   }
 
   obj
+
+}
+
+#' Returns the names of slots that have a dimension 'simulation'
+#'
+#' @param obj an object of class 'Landscape' that has only 1 simulation (nsim=1)
+#' @author T. Carruthers
+#' @export get_sim_slots
+get_sim_slots<-function(obj){
+
+  obj2<-replic8(obj,nsim=3)
+  replist<-NULL
+  slots<-slotNames(obj)
+  for(i in 1:length(slots)){
+
+    if(class(slot(obj,slots[i]))!="character"){ # not a character
+
+      if(!is.null(dim(slot(obj,slots[i]))[1])){        # at least 2 dimensions
+
+        if(!all(dim(slot(obj,slots[i]))==dim(slot(obj2,slots[i])))) replist<-c(replist,slots[i])
+
+      }
+
+    }
+
+  }
+
+  replist
+
+}
+
+
+#' Returns the names of slots that have a dimension 'management'
+#'
+#' @param obj an object of class 'Landscape' that has only 1 management policy (nmanage=1)
+#' @author T. Carruthers
+#' @export get_manage_slots
+get_manage_slots<-function(obj){
+
+  obj2<-replic8(obj,nmanage=3)
+  replist<-NULL
+  slots<-slotNames(obj)
+  for(i in 1:length(slots)){
+
+    if(class(slot(obj,slots[i]))!="character"){ # not a character
+
+      if(!is.null(dim(slot(obj,slots[i]))[1])){        # at least 2 dimensions
+
+        if(!all(dim(slot(obj,slots[i]))==dim(slot(obj2,slots[i])))) replist<-c(replist,slots[i])
+
+      }
+
+    }
+
+  }
+
+  replist
 
 }
 
