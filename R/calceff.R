@@ -316,7 +316,7 @@ calceff<-function(obj,nits=15,couch=F,startE=F,varind=0.2,uprat=0.1,GModel="New 
 
     Dens<-N*(L^2)*10^-6
     Dens[indN]<-Dens[indN]/obj@lakearea[indNl]
-    Dens<-apply(Dens,1:3,sum)
+    Dens<-apply(Dens,1:3,sum,na.rm=T)
 
     if(GModel=="Lester1"){
 
@@ -348,7 +348,7 @@ calceff<-function(obj,nits=15,couch=F,startE=F,varind=0.2,uprat=0.1,GModel="New 
     Linf<-(3*hh)/gg
     K<-log(1+gg/3)
     trial<-1-(gg*(hh*TT+obj@stlen[indt])/(3*hh))
-    trial[trial<0.2]<-0.2
+    trial[trial<0.2|is.na(trial)]<-0.2
     t0<-TT+log(trial)/log(1+gg/3)
     cond2<-t0>(hh*TT+obj@stlen[indt]) # constraints on t0 from ground truthing workshop Penticton 2015
     t0[cond2]<-hh*TT+obj@stlen[indt]

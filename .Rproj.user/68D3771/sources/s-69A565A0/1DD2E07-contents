@@ -1,0 +1,37 @@
+library(shiny)
+library(leaflet)
+
+r_colors <- rgb(t(col2rgb(colors()) / 255))
+names(r_colors) <- colors()
+
+ui <- fluidPage(
+  actionButton("recalc", "New points"),
+  mainPanel(
+    tabsetPanel(
+      tabPanel("Order Locations", leafletOutput("map",width="80%",height="400px")),
+      tabPanel("Markers", verbatimTextOutput("markers"))
+    )
+  )
+)
+
+if (!file.exists("df_final.csv")){
+  nmark <- 50
+  hv <- 80
+  df_final <- data.frame(order_long=runif(nmark,-hv,hv),
+                         order_lat=runif(nmark,-hv,hv))
+  write.csv(df_final,"df_final.csv",row.names=F)
+}
+
+server <- function(input, output, session) {
+
+  dataUpload <- reactiveFileReader(1000, session, 'df_final.csv', read.csv)
+
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      addMarkers(lng=dataUpload()$order_long,lat=dataUpload()$order_lat)
+  })
+  output$markers <- renderPrint({print(dataUpload())})
+}
+
+shinyApp(ui, server)

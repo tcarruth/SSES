@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574397177452.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4E5B602C",
+    "lastKnownWriteTime" : 1574399852,
+    "last_content_update" : 1574399852096,
+    "path" : "C:/GitHub/SSES/inst/shiny_apps/SSES/global.R",
+    "project_path" : "inst/shiny_apps/SSES/global.R",
+    "properties" : {
+        "cursorPosition" : "7,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
