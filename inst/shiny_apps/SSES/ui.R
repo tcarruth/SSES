@@ -2,6 +2,7 @@
 library(shinyjs)
 library(shinyalert)
 library(leaflet)
+obj<-readRDS(file="./Data/Landscape.rda")
 js_code <<- "shinyjs.browseURL = function(url) {window.open(url,'_blank')}"
 js_code <- "
 shinyjs.browseURL = function(url) {
@@ -9,7 +10,6 @@ shinyjs.browseURL = function(url) {
 }
 "
 shinyUI(
-
 
   fluidPage(
 
@@ -70,7 +70,7 @@ shinyUI(
     fluidRow(
 
       column(1,style="height:65px",
-             tags$a(h1("SSES"),href="http://www.merafish.org/",target='_blank')
+             tags$a(h1("SSES"),href="https://github.com/tcarruth/SSES",target='_blank')
       ),
       column(3,style="height:65px",
              h5(textOutput("Version") ,style="padding:22px;")
@@ -79,8 +79,8 @@ shinyUI(
 
       column(3,style="padding:14px;height:65px",
 
-          column(6,tags$a(img(src = "FFS.jpg", height = 45, width = 145),href="https://www.gofishbc.com/",target='_blank')),
-          column(6,tags$a(img(src = "logo 1.png", height = 50, width = 140),href="http://www.bluematter.ca/",target='_blank'))
+          column(6,tags$a(img(src = "FFS.jpg", height = 60, width = 140),href="https://www.gofishbc.com/",target='_blank')),
+          column(6,tags$a(img(src = "logo 1.png", height = 60, width = 160),href="http://www.bluematter.ca/",target='_blank'))
 
       )
 
@@ -88,33 +88,43 @@ shinyUI(
     ),
     hr(),
 
-    h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery options risk, guiding fishery improvement projects, and evaluating management strategies for certification.",style = "color:black"),
-    h5("MERA links a graphical questionnaire to the powerful DLMtool and MSEtool libraries to calculate population status and management performance. ",style = "color:grey"),
-    h5("For further information visit the ", a("SSES website",href="https://merafish.org",target="blank"), " or check the ", a("manual.", href="https://dlmtool.github.io/DLMtool/MERA/MERA_User_Guide_5_1.html", target="_blank"),style = "color:grey"),
+    h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery options.",style = "color:black"),
+    h5("SSES links a map-based GUI to the powerful SSES library.",style = "color:grey"),
+    h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " or check the ", a("manual.", href="https://dlmtool.github.io/DLMtool/MERA/MERA_User_Guide_5_1.html", target="_blank"),style = "color:grey"),
     h5("The SSES paper is also available ", a("here.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
     h5("For technical questions or bug reports please contact ", a("bluemattersci@gmail.com", href="mailto:bluemattersci@gmail.com", target="_blank"),style = "color:grey"),
     hr(),
 
-    actionButton("recalc", "New points"),
-    mainPanel(
-      tabsetPanel(
-        tabPanel("Order Locations", leafletOutput("map",width="80%",height="400px")),
-        tabPanel("Markers", verbatimTextOutput("markers"))
+    column(8,
+      mainPanel(
+        tabsetPanel(id = "tabs",selected=1,
+          tabPanel("Edit lakes",
+                   leafletOutput("Lmap",width="120%",height="800px")
+                   ,value=1),
+          tabPanel("Edit pops.", leafletOutput("Pmap",width="120%",height="800px"),value=2),
+          tabPanel("Utility", verbatimTextOutput("markers"),value=3),
+          tabPanel("Utility", verbatimTextOutput("stuff"),value=4)
+        )
       )
     ),
 
-     fluidRow(
+    column(4,
 
+      # Edit lakes tab
+      conditionalPanel("input.tabs==1",
 
-      column(2,
-            # actionButton("recalc", "New points")
+        selectInput("Lsel","Select lakes",choices=obj@longnam,selected="",multiple=TRUE),
+        column(9),
+        column(3,actionButton("LClear","Clear selection")),
       ),
 
-      column(8,
-             #p(),
-             #leafletOutput("MMap")
-      ),
-      column(2),
+      conditionalPanel("input.tabs==2",
+        selectInput("Psel","Select population centre",choices=obj@pcnam,selected=obj@pcnam[1],multiple=TRUE),
+      )
+
+    ),
+
+    fluidRow(
 
       column(1),
       column(10, textAreaInput("Log", "Log",height="120px")),

@@ -1,3 +1,97 @@
+valsSZ[indSZ]<-predict(lmt[[4]],newdata=preddatSZ)
+msl2<-mspla[,c(1,2,4)]
+vals2[mspla]<-exp((valsSZ[msla]+vals[mspla]+valsCR[msla]+valsCROW[msla])/varind)
+sig2<-apply(vals2,c(1,2,3,5),sum,na.rm=T)   # total attraction across lakes
+if(couch){
+E[mspla]<-pcsize[sp]*pcxa[spa]*vals2[mspla]/(sig2[mspa]+couchlev[mspa])*FTroutAng[p]*unlist(obj@maxdays[sa])
+}else{
+E[mspla]<-pcsize[sp]*pcxa[spa]*vals2[mspla]/sig2[mspa]*unlist(obj@apr[spa])*FTroutAng[p]
+}
+E[is.na(E)]<-0
+conv[,itn]<-E[convind]
+if(dim(E)[3]>1)Econv[,itn]<-apply(E[1,1,,,],2,sum)
+if(dim(E)[3]==1)Econv[,itn]<-apply(E[1,1,,,],1,sum)
+sigE<-apply(uprat*E+(1-uprat)*Eold,c(1,2,4,5),sum)
+Eold<-uprat*E+(1-uprat)*Eold
+FF[indF]<-(sigE[indFE]*unlist(obj@aq[indFsa]))/obj@lakearea[indFl] # total caught
+FM[indF]<-(1-obj@DR[indFsa])*(1-Rel[indFmsla])*FF[indF]+((1-(1-obj@DR[indFsa])*(1-Rel[indFmsla]))*obj@DD[indFs])*FF[indF] # subject to discard rate DR and baglimit
+FFmsl<-apply(FF,1:3,sum)
+FMmsl<-apply(FM,1:3,sum)
+N[indN]<-presatage[indta]*obj@lxslev[indmlt]*exp(-sigM[indsat]-Fmulti[inda2]*FMmsl[indmsl])#-sigM[indsat]) # knife-edge vulnerability @ age 1
+Dens<-N*(L^2)*10^-6
+Dens[indN]<-Dens[indN]/obj@lakearea[indNl]
+Dens<-apply(Dens,1:3,sum)
+if(GModel=="Lester1"){
+GL<-exp(gmax[indst]-alpha[indst]*log(obj@stwt[indt])*Dens[indmsl]-bet[indst]*log(obj@stwt[indt]))
+LA<-(GL*obj@stlen[indt]*AA)+obj@stlen[indt]
+hh = obj@stlen[indt] * GL
+TT<-gamm[indst]*hh^(-delta[indst])-obj@GDD[indsl]*0.001
+gg<-peta[indst]*hh+thetai[indst]
+gg[gg>0.99]<-0.99
+} else if(GModel=="Lester2"){
+hh=gmax[indst]*exp(-alpha[indst]*Dens[indmsl]) *obj@GDD[indsl]*10^-3
+TT=gamm[indst]*hh^-delta[indst]
+LA<-hh*AA+obj@stlen[indt]
+gg<-peta[indst]*hh+thetai[indst]
+gg[gg>0.99]<-0.99
+} else if(GModel=="New Lester"){
+h_T=gmax[indst]*obj@stlen[indt]^bet[indst]*exp(-alpha[indst]*Dens[indmsl])
+hh=h_T/(obj@GDD[indsl]*0.001)
+TT=delta[indst]*hh^-gamm[indst]
+gg<-1.18*(1-exp(-0.2))
+LA<-hh*AA+obj@stlen[indt]
+}
+Linf<-(3*hh)/gg
+K<-log(1+gg/3)
+trial<-1-(gg*(hh*TT+obj@stlen[indt])/(3*hh))
+trial[trial<0.2]<-0.2
+t0<-TT+log(trial)/log(1+gg/3)
+cond2<-t0>(hh*TT+obj@stlen[indt]) # constraints on t0 from ground truthing workshop Penticton 2015
+t0[cond2]<-hh*TT+obj@stlen[indt]
+inter<-AA-t0
+LA2<-Linf*(1-exp(-K*(inter)))
+L[indN]<-LA
+L[indN[AA>TT,]]<-LA2[AA>TT]
+if(!quiet)print(itn)
+flush.console()
+}
+obj@conv<-conv                                # Effort x angler type convergence data
+obj@Econv<-Econv                              # Effort on lake convergence data
+obj@U<-vals2                                  # The utility array
+options(warn=1)
+obj@eff<-E                                    # Expected effort distribution
+obj@sigeff<-apply(obj@eff,c(1,2,4),sum)       # Sum effort over manage, sim and lake
+obj@avs<-AvSo                                 # Average size
+obj@cr<-apply(CR,1:4,sum)/4                   # Catch rate per hour (4 hours per day mean)
+obj<-calcCB(obj)                              # Cost / benefit calculation
+uprat<-0.05   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.1    # Experiment with this - value 1 produces the exact utility of the landscape in the U slot so better for graphing in b
+nits<-100      # The number of IFD iterations (just for demo purposes here!)
+# --- Choose a generic range of multiplication for demonstration purposes
+mult<-c(6/7, 7/8, 1, 8/7, 7/6)
+nsim<-length(mult)
+# --- Replicate the landscape object into various management regimes ----------------------------------------------
+obj_stoch<-replic8(obj,nsim=nsim)
+# --- VOI dynamics example 1: Growing Degree Days -------------------------------------------------------------------------
+obj_GDD<-obj_stoch
+obj_GDD@GDD<-obj_GDD@GDD*mult
+obj_GDD<-calceff(obj_GDD,nits=nits,varind=varind,uprat=uprat,couch=F) # Run the LSM to convergence on the IFD for all management regimes couch=F as not run to IFD yet
+obj_GDD<-calccouch2(obj_GDD)  # couch effect calculated for all
+obj_GDD<-calceff(obj_GDD,nits=nits,varind=varind,uprat=uprat,couch=T)
+source('C:/GitHub/SSES/R/Landscape_manipulation_functions.R', echo=TRUE)
+# --- Load latest complete landscape object (584 lakes, 24 population centres) ------------------------------------
+load(file='./Out/Landscape/Landscape_Step6')                           # Load a recent full landscape model
+# --- Parameters for IFD calculations -----------------------------------------------------------------------------
+uprat<-0.05   # When converging on a stable effort distribution is the contributing fraction of new effort
+varind<-0.1    # Experiment with this - value 1 produces the exact utility of the landscape in the U slot so better for graphing in b
+nits<-100      # The number of IFD iterations (just for demo purposes here!)
+# --- Choose a generic range of multiplication for demonstration purposes
+mult<-c(6/7, 7/8, 1, 8/7, 7/6)
+nsim<-length(mult)
+# --- Replicate the landscape object into various management regimes ----------------------------------------------
+obj_stoch<-replic8(obj,nsim=nsim)
+# --- VOI dynamics example 1: Growing Degree Days -------------------------------------------------------------------------
+obj_GDD<-obj_stoch
 obj_GDD@GDD<-obj_GDD@GDD*mult
 obj_GDD<-calceff(obj_GDD,nits=nits,varind=varind,uprat=uprat,couch=F) # Run the LSM to convergence on the IFD for all management regimes couch=F as not run to IFD yet
 obj_GDD<-calccouch2(obj_GDD)  # couch effect calculated for all
@@ -416,97 +510,3 @@ source('C:/Users/tcar_/Dropbox/SSES/Example analyses/Analysis 5 - Stochastic sim
 ?SSES-package
 devtools::document()
 devtools::document()
-library(SSES)
-library(SSES)
-shiny::runApp('inst/shiny_apps/SSES')
-?renderLeaflet
-runApp('inst/shiny_apps/SSES')
-setwd("C:/Users/tcar_/Dropbox/SSES")                                # Set working directory
-load(file='./Out/Landscape/Landscape_Step6')
-saveRDS(obj,"c:/temp/Landscape.rda")
-runApp('C:/GitHub/SSES/inst/shiny_apps/SSES')
-runApp('C:/GitHub/SSES/inst/shiny_apps/SSES')
-?setView
-runApp('C:/GitHub/SSES/inst/shiny_apps/SSES')
-max(obj@lakex)
-max(obj@lakex)
-runApp('C:/GitHub/SSES/inst/shiny_apps/SSES')
-shiny::runApp()
-runApp()
-runApp()
-?addMarkers
-runApp()
-output$map <- renderLeaflet({
-leaflet() %>%
-addTiles() %>%
-addCircleMarkers(lng=obj@lakex,lat=obj@lakey,label=obj@lakenam) %>%
-fitBounds(lng1=min(obj@lakex),lng2=max(obj@lakex),lat1=min(obj@lakey),lat2=max(obj@lakey),options=list(padding=c(0,0)))
-})
-runApp()
-obj@lakearea
-runApp()
-output$map <- renderLeaflet({
-leaflet() %>%
-addTiles() %>%
-addCircleMarkers(lng=obj@lakex,lat=obj@lakey,label=obj@lakenam,radius=(obj@lakearea^0.3)) %>%
-fitBounds(lng1=min(obj@lakex),lng2=max(obj@lakex),lat1=min(obj@lakey),lat2=max(obj@lakey),options=list(padding=c(0,0)))
-})
-runApp()
-Ldat<-as.data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam)
-obj@lakex
-Ldat<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam)
-Ldat
-Ldat<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam)
-Ldat<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam,longname=obj@longnam)
-Ldat
-runApp()
-obj@pcsize
-runApp()
-runApp()
-obj@pcsize
-Pdat<<-data.frame(lng=obj@pcx,lat=obj@pcy,size=obj@pcsize,name=obj@pcnam)
-class(Pdat$size)
-Pdat<-data.frame(lng=obj@pcx,lat=obj@pcy,size=obj@pcsize,name=obj@pcnam)
-head(Pdat)
-obj@pcsize
-Pdat<-data.frame(lng=obj@pcx,lat=obj@pcy,size=obj@pcsize[1,],name=obj@pcnam)
-runApp()
-Pdat<-data.frame(lng=obj@pcx,lat=obj@pcy,size=obj@pcsize[1,],name=obj@pcnam)
-Pdat
-class(Pdat$size)
-Pdat$size/100
-(Pdat$size/100)^0.3
-runApp()
-p
-runApp()
-info
-runApp()
-runApp()
-map_marker_click
-runApp()
-Lcol<-function(sel){
-col<-rep('blue',length(sel))
-col[sel==2]<-'black'
-col
-}
-runApp()
-?selectInput
-runApp()
-runApp()
-runApp()
-obj@lakenam
-obj@pcnam
-runApp()
-shiny::runApp()
-getwd()
-runApp()
-obj@lakenam
-obj@pcnam
-runApp()
-runApp()
-runApp()
-shiny::runApp()
-?readRDS
-shiny::runApp()
-runApp()
-runApp()

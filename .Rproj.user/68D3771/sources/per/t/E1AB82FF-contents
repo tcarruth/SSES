@@ -7,6 +7,14 @@ shinyServer(function(input, output, session) {
 options(shiny.maxRequestSize=1000*1024^2)
 
 
+
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles()%>%
+      fitBounds(lng1=min(obj@lakex),lng2=max(obj@lakex),lat1=min(obj@lakey),lat2=max(obj@lakey),options=list(padding=c(0,0)))
+
+  })
+
   # Reactive code
   # Fpanel<-reactiveVal(0)
   #output$Fpanel <- reactive({ Fpanel()})
@@ -14,6 +22,7 @@ options(shiny.maxRequestSize=1000*1024^2)
   #output$Fpanelout <- renderText({ paste("Fishery",Fpanel(),"/ 19")})
 
   # Update UI
+  Version<<-"1.1.1"
   output$Version<-renderText(paste0("social ecological systems model    (v", Version, ")")) #"method evaluation and risk assessment    (MSC-DLMtool App v4.1.7)"
   output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES'))) #"method evaluation and risk assessment    (MSC-DLMtool App v4.1.7)"
 
@@ -25,16 +34,47 @@ options(shiny.maxRequestSize=1000*1024^2)
   CurrentYr<-as.integer(substr(as.character(Sys.time()),1,4))
   Copyright<-"Open Source, GPL-2"
 
- # observe all changes go controls or tabs
+  # Load default landscape object
+  #Ldat<<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam,longname=obj@longnam,sel=rep(FALSE,obj@nl))
+
+  Ldat<-reactive({
+    newdata<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam,longname=obj@longnam,col=rep("blue",obj@nl))
+    newdata$col[match(input$Lsel,obj@lakenam)]<-"red"
+    return(newdata)
+  })
+
+  Pdat<-reactive({
+    newdata<-data.frame(lng=obj@pcx,lat=obj@pcy,np=as.numeric(obj@pcsize[1,]),name=obj@pcnam,col=rep("black",obj@npc))
+    #newdata$col[match(input$Psel,obj@pcnam)]<-"red"
+    return(newdata)
+  })
+
+  # Load source code
+  source("./Source/Misc/Misc.R",local=TRUE)
+  obj<-readRDS(file="./Data/Landscape.rda")
+
+
+
+  #observe all changes go controls or tabs
   #observeEvent(sapply(inputtabs, function(x) input[[x]]),{
     #UpPanelState()
   #})
 
-  output$map <- renderLeaflet({
-    leaflet() %>%
-      addTiles() %>%
-      addMarkers(lng=c(100,170),lat=c(100,170))
+
+  observe({
+    leafletProxy('map')%>%
+
+      addCircleMarkers(data=Ldat(),lng=~lng,lat=~lat,label=~name,radius=(~area^0.3),stroke=FALSE,color=~col,fillOpacity=0.45,layerId=~name)#%>%
+      #addCircleMarkers(data=Pdat(),lng=~lng,lat=~lat,label=~name,radius=~np,color=~col,stroke=FALSE,fillOpacity=0.45,layerId=~name)
   })
+
+  observeEvent(input$map_marker_click, {
+    out <- input$map_marker_click
+    #saveRDS(out,file="C:/temp/out.rda")
+    #AM(p)
+    updateTextAreaInput(session, "Log", value=as.character(names(out)))
+  })
+
   #output$markers <- renderPrint({print(dataUpload())})
 
   #observeEvent(input$Mode,{
