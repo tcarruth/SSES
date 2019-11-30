@@ -16,6 +16,7 @@
 #' @param Rsta logical, should the coefficient of determination ('R-squared') value be plotted?
 #' @author T. Carruthers
 #' @export Ecomp
+#' @import wordcloud
 Ecomp<-function(obj,funcy=NA,lcex=0.7,pcol=NA,pcex=0.7,log=T,nice=T,lims=NA,forpaper=F,dens=F,plottext=T,Rstat=T){
 
   tiny=1E-20
@@ -322,7 +323,7 @@ mapeff<-function(obj,maxps=2,latlim=NA,lonlim=NA,nman=1,nsim=1,dens=F,U=F,lcex=0
 
   for(mm in 1:nman){
     for(ss in 1:nsim){
-      map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,col=obj@topcols[1],mar=rep(0.3,4))  # make a first plot of the map to define the range of the plot
+      map(database = "world", xlim=lonlim, ylim=latlim,resolution = 0,col=obj@topcols[1],mar=rep(0.3,4))  # make a first plot of the map to define the range of the plot
       #polygon(x=rep(lonlim*c(0.5,1.5),each=2),y=c(latlim*c(0.5,1.5),(latlim*c(0.5,1.5))[2:1]),col=colors()[257],border=NA)
       #for(i in 1:length(obj@cont))lines(obj@cont[[i]]$x,obj@cont[[i]]$y,type="l",col=obj@topcols[(obj@cont[[i]]$level/500)+1])#lapply(bc@cont,plottop,cols=bc@topcols)
       #for(i in 1:length(obj@cont))polygon(obj@cont[[i]]$x,obj@cont[[i]]$y,col=obj@topcols[(obj@cont[[i]]$level/500)+1],border=obj@topcols[(obj@cont[[i]]$level/500)+1])#lapply(bc@cont,plottop,cols=bc@topcols)
@@ -421,19 +422,3 @@ makeTransparent<-function(someColor, alpha=100)
 }
 
 
-
-
-
-sdconv <- function(m,sd)(log(1+((sd^2)/(m^2))))^0.5
-
-mconv<-function(m,sd)log(m)-0.5*log(1+((sd^2)/(m^2)))
-
-alphaconv<-function(m,sd)m*(((m*(1-m))/(sd^2))-1)
-
-betaconv<-function(m,sd)(1-m)*(((m*(1-m))/(sd^2))-1)
-
-trlnorm<-function(reps,mu,cv) {
-  if (all(is.na(mu))) return(rep(NA, reps))
-  if (all(is.na(cv))) return(rep(NA, reps))
-  return(rlnorm(reps,mconv(mu,mu*cv),sdconv(mu,mu*cv)))
-}
