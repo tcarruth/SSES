@@ -61,7 +61,7 @@ if(I_have_an_hour){
   test<-nlm(opt_DR_acc,p=rep(0,2),stepmax=0.1,gradtol=0.001,steptol=0.01,obj=obj,nits=100,plot=T,
             varind=varind,uprat=uprat)
 
-  obj<-optEfunB(test$estimate,opt=F,obj=obj,nits=nits,plot=T,
+  obj<-opt_DR_acc(test$estimate,opt=F,obj=obj,nits=nits,plot=T,
                 varind=varind,uprat=uprat)                # Make a new object using the optimized parameters
 
 }

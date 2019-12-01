@@ -78,7 +78,7 @@
 #' @slot FTroutAng Numeric. The fraction of licensed anglers that are trout fishers (population centre)
 #' @slot acc Array. Access metric (simulation, lake)
 #' @slot acc_a Numeric. The optimized slope parameter converting the access metric into a lake gravity term
-#' @slot misc data.frame. Somewhere to store stuff
+#' @slot misc list. Somewhere to store stuff
 #' @slot sel Array. Age selectivity of anglers (simulation, age)
 #' @slot GModel Character. Growth model used (Lester1, Lester2, New Lester)
 #' @slot couch 4D Array. A specified couch effect (managment mode, simulation, population centre, angler class)
@@ -108,7 +108,7 @@ setClass("Landscape",representation(Name="character",Note="character",npc="numer
                                     topcols="character",costs="array",Scosts="array",totcost="array",effval="array",licval="array",stnam="character",
                                     aclass="numeric",stwt="numeric",stlen="numeric",popval="array",poperr="data.frame",errs="data.frame",Mage="array",CB="array",
                                     conv="array",Econv="array",lm='list',U="array",FTroutAng="numeric",acc="array",acc_a="numeric",
-                                    misc="data.frame",sel="array",GModel="character",couch="array",fac="array",fac_a="numeric",
+                                    misc="list",sel="array",GModel="character",couch="array",fac="array",fac_a="numeric",
                                     DR="array",DD="numeric",BagLim="array",maxdays="array"))
 
 

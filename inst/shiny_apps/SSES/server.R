@@ -16,18 +16,19 @@ options(shiny.maxRequestSize=1000*1024^2)
       fitBounds(lng1=as.vector(quantile(obj@lakex,0.02)),lng2=as.vector(quantile(obj@lakex,0.98)),
                 lat1=as.vector(quantile(obj@lakey,0.01)),lat2=as.vector(quantile(obj@lakey,0.95))) %>%
       addDrawToolbar(
-      targetGroup='Selected',
-      markerOptions = FALSE,
-      polylineOptions= FALSE,
-      circleMarkerOptions = FALSE,
-      rectangleOptions = drawRectangleOptions(shapeOptions=drawShapeOptions(fillOpacity = 0
+        position="topright",
+        targetGroup='Selected',
+        markerOptions = FALSE,
+        polylineOptions= FALSE,
+        circleMarkerOptions = FALSE,
+        rectangleOptions = drawRectangleOptions(shapeOptions=drawShapeOptions(fillOpacity = 0
                                                                             ,color = 'red'
                                                                             ,weight = 3)),
-      polygonOptions = drawPolygonOptions(shapeOptions=drawShapeOptions(fillOpacity = 0
+        polygonOptions = drawPolygonOptions(shapeOptions=drawShapeOptions(fillOpacity = 0
                                                                         ,color = 'red'
                                                                         ,weight = 3)),
-      circleOptions = FALSE,
-      editOptions = editToolbarOptions(edit = FALSE, selectedPathOptions = selectedPathOptions()))
+        circleOptions = FALSE,
+        editOptions = editToolbarOptions(edit = FALSE, selectedPathOptions = selectedPathOptions()))
   })
 
   observeEvent(input$Lmap_draw_new_feature,{
@@ -55,7 +56,16 @@ options(shiny.maxRequestSize=1000*1024^2)
     newIDs<-obj@longnam[point.in.polygon(obj@lakex,obj@lakey,poly$Lon, poly$Lat)==1]
 
     selled<-input$Lsel
-    updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
+    if(input$LMode=="Add"){
+      updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
+    }else if(input$LMode=="Subtract"){
+      newselled<-selled[!selled%in%newIDs]
+      updateSelectInput(session=session,"Lsel",selected=newselled)
+    }else{
+      newselled<-selled[!selled%in%newIDs]
+      newIDs<-newIDs[!newIDs%in%selled]
+      updateSelectInput(session=session,"Lsel",selected=c(newselled,newIDs))
+    }
 
   })
 
@@ -67,8 +77,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   # Update UI
   Version<<-"1.1.1"
-  output$Version<-renderText(paste0("social ecological systems model    (v", Version, ")")) #"method evaluation and risk assessment    (MSC-DLMtool App v4.1.7)"
-  output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES'))) #"method evaluation and risk assessment    (MSC-DLMtool App v4.1.7)"
+  output$Version<-renderText(paste0("spatial social ecological systems (v", Version, ")"))
+  output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES')))
 
   # Some useful things
   USERID<-Sys.getenv()[names(Sys.getenv())=="USERNAME"]
@@ -100,17 +110,18 @@ options(shiny.maxRequestSize=1000*1024^2)
   source("./Source/Misc/Misc.R",local=TRUE)
   obj<-readRDS(file="./Data/Landscape.rda")
 
-  observeEvent(input$LClear,
-               updateSelectInput(session=session,"Lsel",selected="")
+  observeEvent(input$LAll,
+      updateSelectInput(session=session,"Lsel",selected=obj@longnam)
   )
 
+  observeEvent(input$LClear,
+      updateSelectInput(session=session,"Lsel",selected="")
+  )
 
   #observe all changes go controls or tabs
   #observeEvent(sapply(inputtabs, function(x) input[[x]]),{
     #UpPanelState()
   #})
-
-
 
   observe({
 

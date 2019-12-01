@@ -79,8 +79,8 @@ shinyUI(
 
       column(3,style="padding:14px;height:65px",
 
-          column(6,tags$a(img(src = "FFS.jpg", height = 60, width = 140),href="https://www.gofishbc.com/",target='_blank')),
-          column(6,tags$a(img(src = "logo 1.png", height = 60, width = 160),href="http://www.bluematter.ca/",target='_blank'))
+          column(6,tags$a(img(src = "FFS.jpg", height = 50, width = 110),href="https://www.gofishbc.com/",target='_blank')),
+          column(6,tags$a(img(src = "logo 1.png", height = 52, width = 150),href="http://www.bluematter.ca/",target='_blank'))
 
       )
 
@@ -89,29 +89,81 @@ shinyUI(
     hr(),
 
     h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery options.",style = "color:black"),
-    h5("SSES links a map-based GUI to the powerful SSES library.",style = "color:grey"),
-    h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " or check the ", a("manual.", href="https://dlmtool.github.io/DLMtool/MERA/MERA_User_Guide_5_1.html", target="_blank"),style = "color:grey"),
-    h5("The SSES paper is also available ", a("here.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
+    h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " consult the ", a("manual", href="https://dlmtool.github.io/DLMtool/MERA/MERA_User_Guide_5_1.html", target="_blank")," or read the ", a("paper.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
     h5("For technical questions or bug reports please contact ", a("bluemattersci@gmail.com", href="mailto:bluemattersci@gmail.com", target="_blank"),style = "color:grey"),
     hr(),
 
-
-
+    fluidRow(
     column(8,
       mainPanel(
-        tabsetPanel(
-          tabPanel("Edit", leafletOutput("map",width="120%",height="800px")),
-          tabPanel("Utility", verbatimTextOutput("markers")),
-          tabPanel("Utility", verbatimTextOutput("stuff"))
+        tabsetPanel(id = "tabs",selected=2,
+          tabPanel("Landscape info",
+                   leafletOutput("Imap",width="151%",height="650px"), value=1),
+          tabPanel("Management",
+                   leafletOutput("Lmap",width="151%",height="650px"), value=2),
+          tabPanel("Calculation", verbatimTextOutput("markers"),value=3),
+          tabPanel("Results", verbatimTextOutput("stuff"),value=4)
         )
       )
     ),
-    column(4,
-      selectInput("Lsel","Select lakes",choices=obj@lakenam,selected=obj@lakenam[1],multiple=TRUE),
-      selectInput("Psel","Select population centre",choices=obj@pcnam,selected=obj@pcnam[1],multiple=TRUE),
-      actionButton("recalc", "New points")
-    ),
 
+    column(4,
+      HTML("<br>"),
+      hr(),
+
+      # Edit lakes tab
+      conditionalPanel("input.tabs==2",
+
+        h4("Selection Mode"),
+
+        column(8,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersect"),selected="Add",inline=TRUE),style="padding-top:7px"),
+        column(4,
+               actionButton("LAll","Select all"),
+               actionButton("LClear","Clear")
+        ),
+        column(12,style="padding-top:10px"),
+
+        h4("Selection by Lake Attributes"),
+        column(8,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","S.type","S.lev","Effort"),selected="Size",inline=TRUE)),
+        column(4,actionButton("LAttSel","Select by Attributes")),
+        conditionalPanel("input.LTType=='Size'",
+          column(12, sliderInput("LSize","Hectares",0,round(quantile(obj@lakearea,0.98)/100,0)*100,value=c(100,200),step=1,round=T))
+
+        ),
+        conditionalPanel("input.LTType=='GDD'",
+          column(12, sliderInput("LGDD","Growing Degree Days",0,round(max(obj@GDD),0),value=c(1000,1200),step=5,round=T)),
+
+        ),
+        conditionalPanel("input.LTType=='Distance'",
+          column(12, sliderInput("Ldist","Road kilometers",0,round(max(obj@pcxl)/1000,0)*1000,value=c(200,400),step=5,round=T)),
+          column(12, selectInput("LPsel","From pop. center:",choices=c("All",obj@pcnam),selected="All",multiple=TRUE))
+        ),
+
+
+        column(12,style="padding-top:15px; padding-left:0px",
+               hr(),
+               h4("Lake Attributes")
+
+        )
+
+
+
+
+
+      ),
+
+      conditionalPanel("input.tabs==1",
+        h5("Info panel output")
+      )
+
+    ),
+    column(8,style="padding:30px",
+
+      selectInput("Lsel",label="Selected lakes",choices=obj@longnam,selected="",multiple=TRUE),
+    )
+
+    ),
+    hr(),
     fluidRow(
 
       column(1),

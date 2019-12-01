@@ -13,7 +13,7 @@
 # --- 2a Prerequisites  ----------------------------------------------------------------------------------
 
 library(SSES)                                                          # Load the library
-setwd("C:/Users/tcarruth/Dropbox/SSES")                                   # Set working directory
+setwd("C:/Users/tcar_/Dropbox/SSES")                                   # Set working directory
 
 
 # --- 2b load principal data sets ------------------------------------------------------------------------
