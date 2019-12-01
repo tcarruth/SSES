@@ -93,8 +93,9 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   Ldat<-reactive({
 
-    newdata<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam,longname=obj@longnam,col=rep("blue",length(obj@longnam)),stringsAsFactors = FALSE)
+    newdata<-data.frame(lng=obj@lakex,lat=obj@lakey,area=as.numeric(obj@lakearea),name=obj@lakenam,longname=obj@longnam,col=rep("blue",length(obj@longnam)),stringsAsFactors = FALSE)
     newdata$col[match(input$Lsel,obj@longnam)]<-"red"
+    class(newdata$area)<-"numeric"
 
     #saveRDS(newdata,"C:/temp/newdata")
     return(newdata)
@@ -123,10 +124,13 @@ options(shiny.maxRequestSize=1000*1024^2)
     #UpPanelState()
   #})
 
+  circfunc<-function(x){
+    1.5+x^0.28
+  }
   observe({
 
       leafletProxy('Lmap')%>%
-        addCircleMarkers(data=Ldat(),lng=~lng,lat=~lat,label=~longname,radius=(~area^0.3),stroke=FALSE,color=~col,fillOpacity=0.45,layerId=~longname)#%>%
+        addCircleMarkers(data=Ldat(),lng=~lng,lat=~lat,label=~longname,radius=circfunc(obj@lakearea),stroke=FALSE,color=~col,fillOpacity=0.45,layerId=~longname)#%>%
           #addCircleMarkers(data=Pdat(),lng=~lng,lat=~lat,label=~name,radius=~np,color=~col,stroke=FALSE,fillOpacity=0.45,layerId=~name)
   })
 

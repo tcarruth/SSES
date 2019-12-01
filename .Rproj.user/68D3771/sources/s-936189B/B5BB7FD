@@ -5,15 +5,15 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "12195562",
+    "hash" : "0",
     "id" : "B5BB7FD",
-    "lastKnownWriteTime" : 1575183449,
-    "last_content_update" : 1575183449836,
+    "lastKnownWriteTime" : 1575224423,
+    "last_content_update" : 1575224423590,
     "path" : "C:/GitHub/SSES/inst/shiny_apps/SSES/ui.R",
     "project_path" : "inst/shiny_apps/SSES/ui.R",
     "properties" : {
-        "cursorPosition" : "107,6",
-        "scrollLine" : "96"
+        "cursorPosition" : "119,22",
+        "scrollLine" : "113"
     },
     "read_only" : false,
     "read_only_alternatives" : [

@@ -104,6 +104,12 @@ shinyUI(
           tabPanel("Calculation", verbatimTextOutput("markers"),value=3),
           tabPanel("Results", verbatimTextOutput("stuff"),value=4)
         )
+      ),
+      column(12,style="padding:18px",
+          selectInput("Lsel",label="Selected lakes",choices=obj@longnam,selected="",multiple=TRUE)
+      ),
+      column(12, style="padding:18px",
+          textAreaInput("Log", "Log",height="120px"),
       )
     ),
 
@@ -114,7 +120,14 @@ shinyUI(
       # Edit lakes tab
       conditionalPanel("input.tabs==2",
 
-        h4("Selection Mode"),
+
+        h4("Management Scenario to Edit:"),
+        column(4,selectInput("MType",label=NULL,choices=obj@misc$Mnams,selected=obj@misc$Mnams[length(obj@misc$Mnams)])),
+
+        column(12,style="padding-top:15px; padding-left:0px",
+               hr(),
+               h4("Selection")
+        ),
 
         column(8,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersect"),selected="Add",inline=TRUE),style="padding-top:7px"),
         column(4,
@@ -123,7 +136,6 @@ shinyUI(
         ),
         column(12,style="padding-top:10px"),
 
-        h4("Selection by Lake Attributes"),
         column(8,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","S.type","S.lev","Effort"),selected="Size",inline=TRUE)),
         column(4,actionButton("LAttSel","Select by Attributes")),
         conditionalPanel("input.LTType=='Size'",
@@ -131,23 +143,19 @@ shinyUI(
 
         ),
         conditionalPanel("input.LTType=='GDD'",
-          column(12, sliderInput("LGDD","Growing Degree Days",0,round(max(obj@GDD),0),value=c(1000,1200),step=5,round=T)),
+          column(12, sliderInput("LGDD","Growing Degree Days",0,round(max(obj@GDD),0),value=c(1000,1200),step=5,round=T))
 
         ),
-        conditionalPanel("input.LTType=='Distance'",
+        conditionalPanel("input.LTType=='Dist.'",
           column(12, sliderInput("Ldist","Road kilometers",0,round(max(obj@pcxl)/1000,0)*1000,value=c(200,400),step=5,round=T)),
           column(12, selectInput("LPsel","From pop. center:",choices=c("All",obj@pcnam),selected="All",multiple=TRUE))
         ),
-
 
         column(12,style="padding-top:15px; padding-left:0px",
                hr(),
                h4("Lake Attributes")
 
         )
-
-
-
 
 
       ),
@@ -157,26 +165,20 @@ shinyUI(
       )
 
     ),
-    column(8,style="padding:30px",
 
-      selectInput("Lsel",label="Selected lakes",choices=obj@longnam,selected="",multiple=TRUE),
-    )
 
-    ),
     hr(),
     fluidRow(
 
-      column(1),
-      column(10, textAreaInput("Log", "Log",height="120px")),
+     column(12),
+     hr(),
 
-       column(12),
-       hr(),
-
-       column(6,style="height:40px"),
-       column(2,style="height:40px; padding:9px",textOutput("Dependencies")),
-       column(2,style="height:40px; padding:9px",textOutput("SessionID")),
-       column(2,style="height:40px", h6("Open Source, GPL-2, 2019"))
+     column(6,style="height:40px"),
+     column(2,style="height:40px; padding:9px",textOutput("Dependencies")),
+     column(2,style="height:40px; padding:9px",textOutput("SessionID")),
+     column(2,style="height:40px", h6("Open Source, GPL-2, 2019"))
     ) # end of fluid row
+    )
 
     ) # end of fluid page
   ) # end of server
