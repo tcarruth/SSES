@@ -97,12 +97,13 @@ shinyUI(
     column(8,
       mainPanel(
         tabsetPanel(id = "tabs",selected=2,
-          tabPanel("Landscape info",
+          tabPanel("Performance",
                    leafletOutput("Imap",width="151%",height="650px"), value=1),
-          tabPanel("Management",
+          tabPanel("Management Scenarios",
                    leafletOutput("Lmap",width="151%",height="650px"), value=2),
-          tabPanel("Calculation", verbatimTextOutput("markers"),value=3),
-          tabPanel("Results", verbatimTextOutput("stuff"),value=4)
+          tabPanel("Calculation options", h5("<Calculation options>"),value=3),
+          tabPanel("Edit Landscape",h5("<Add / remove lakes"),value=4)
+
         )
       ),
       column(12,style="padding:18px",
@@ -126,7 +127,7 @@ shinyUI(
 
         column(12,style="padding-top:15px; padding-left:0px",
                hr(),
-               h4("Selection")
+               h4("Lake Selection")
         ),
 
         column(8,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersect"),selected="Add",inline=TRUE),style="padding-top:7px"),
@@ -136,7 +137,8 @@ shinyUI(
         ),
         column(12,style="padding-top:10px"),
 
-        column(8,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","S.type","S.lev","Effort"),selected="Size",inline=TRUE)),
+        # Selection methods by Attribute
+        column(8,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","Stocking","Effort","Manage."),selected="Size",inline=TRUE)),
         column(4,actionButton("LAttSel","Select by Attributes")),
         conditionalPanel("input.LTType=='Size'",
           column(12, sliderInput("LSize","Hectares",0,round(quantile(obj@lakearea,0.98)/100,0)*100,value=c(100,200),step=1,round=T))
@@ -150,10 +152,25 @@ shinyUI(
           column(12, sliderInput("Ldist","Road kilometers",0,round(max(obj@pcxl)/1000,0)*1000,value=c(200,400),step=5,round=T)),
           column(12, selectInput("LPsel","From pop. center:",choices=c("All",obj@pcnam),selected="All",multiple=TRUE))
         ),
+        conditionalPanel("input.LTType=='Stocking'",
+          column(12, checkboxGroupInput("Stype","Stocking type",choices=obj@stnam,selected=obj@stnam[1],inline=TRUE)),
+          column(12, sliderInput("Slev","Stocking numbers (,000s)",0,round((max(obj@lxslev)*1.05)/10000,0)*10,value=c(5,20),step=1,round=T)),
 
+        ),
+        conditionalPanel("input.LTType=='Effort'",
+          column(12, sliderInput("Effort","Annual fishing effort (days)",0,round((max(obj@eff)*1.05)/100,0)*100,value=c(100,500),step=10,round=T))
+
+        ),
+        conditionalPanel("input.LTType=='Manage.'",
+          column(6, checkboxGroupInput("BoatRes","Boat Restrictions",choiceNames=c("No boats","Car top","Trailer"),choiceValues=1:3,inline=TRUE)),
+          column(6, checkboxGroupInput("MotorRes","Motor Restrictions",choiceNames=c("Any","Less than 10hp","Electric only"),choiceValues=1:3,inline=TRUE)),
+          column(6, checkboxGroupInput("GearRes","Gear Restrictions",choiceNames=c("None","Bait ban","Barbless hooks","Fly fish. only"),choiceValues=1:4,inline=TRUE)),
+          column(6, checkboxGroupInput("Take","Take Limit",choiceNames=c("No take","1 fish","4 fish","5+ fish"),choiceValues=1:4,inline=TRUE))
+
+        ),
         column(12,style="padding-top:15px; padding-left:0px",
                hr(),
-               h4("Lake Attributes")
+               h4("Selection Attributes")
 
         )
 
