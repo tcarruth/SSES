@@ -57,14 +57,21 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     selled<-input$Lsel
     if(input$LMode=="Add"){
-      updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
+      #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
+      UpdateSel(c(selled,newIDs))
     }else if(input$LMode=="Subtract"){
-      newselled<-selled[!selled%in%newIDs]
-      updateSelectInput(session=session,"Lsel",selected=newselled)
-    }else{
+      #newselled<-selled[!selled%in%newIDs]
+      #updateSelectInput(session=session,"Lsel",selected=newselled)
+      UpdateSel(selled[!selled%in%newIDs])
+    }else if(input$LMode=="Intersection"&length(input$Lsel)>0){
+      #newselled<-selled[selled%in%newIDs]
+      #updateSelectInput(session=session,"Lsel",selected=newselled)
+      UpdateSel(selled[selled%in%newIDs])
+    }else if(input$LMode=="Difference"&length(input$Lsel)>0){
       newselled<-selled[!selled%in%newIDs]
       newIDs<-newIDs[!newIDs%in%selled]
-      updateSelectInput(session=session,"Lsel",selected=c(newselled,newIDs))
+      UpdateSel(c(newselled,newIDs))
+      #updateSelectInput(session=session,"Lsel",selected=c(newselled,newIDs))
     }
 
   })
@@ -136,16 +143,158 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$Lmap_marker_click, {
     out <- input$Lmap_marker_click
-    updateTextAreaInput(session, "Log", value=out[1])
+    AM(out)
     selled<-input$Lsel
     if(sum(out[1]%in%selled)>0){
-      updateSelectInput(session=session,"Lsel",selected=selled[selled!=out[1]])
+      tosel=selled[selled!=out[1]]
+      UpdateSel(tosel)
     }else{
-      updateSelectInput(session=session,"Lsel",selected=c(selled,out[1]))
+      UpdateSel(tosel=c(selled,out[1]))#updateSelectInput(session=session,"Lsel",selected=c(selled,out[1]))
     }
     saveRDS(selled,file="C:/temp/selled.rda")
     saveRDS(out,file="C:/temp/out.rda")
     #AM(p)
+
+  })
+
+  UpdateSel<-function(tosel){ # temporary function for when attributes should be shown
+    saveRDS(tosel,file="C:/temp/tosel.rda")
+    if(length(tosel)>0){
+      tosel<-unique(tosel)
+      updateSelectInput(session=session,"Lsel",selected=tosel)
+      mind<-match(input$MType,obj@misc$Mnams)
+      Lind<-obj@longnam%in%tosel
+      smat<-matrix(obj@lxslev[mind,Lind,],nrow=length(tosel))
+      x<-data.frame(smat)
+      names(x)<-obj@stnam
+      row.names(x)<-obj@longnam[Lind]
+      output$SelAtt<-renderDT(x, selection = 'none', editable = obj@stnam)
+      x2<-as.data.frame(matrix(apply(smat,2,sum)/1000,ncol=length(obj@stnam)))
+      names(x2)<-obj@stnam
+      row.names(x2)<-paste0("All lakes (n = ",sum(Lind),")")
+      output$GrpAtt<-renderDT(x2, selection = 'none',escape=FALSE, caption='',
+                              class = 'display',options = list(dom = 't'))
+    }else{
+      updateSelectInput(session=session,"Lsel",choices=obj@longnam,selected=NULL)
+      nulltab<-data.frame(matrix(rep("-",length(obj@nst)),ncol=obj@nst))
+      names(nulltab)<-obj@stnam
+      row.names(nulltab)<-"No lakes selected"
+      output$SelAtt<-renderDT(nulltab,selection = 'none',escape=FALSE, caption='',
+                              class = 'display',options = list(dom = 't'))
+      output$GrpAtt<-renderDT(nulltab,selection = 'none',escape=FALSE, caption='',
+                              class = 'display',options = list(dom = 't'))
+    }
+
+  }
+
+  observeEvent(input$LAttSel,{
+    if(input$LTType=="Size"){
+
+      Ls<-input$LSize
+      if(Ls[2]==round(quantile(obj@lakearea,0.98)/100,0)*100)Ls[2]<-Inf
+      newIDs=obj@longnam[obj@lakearea>=Ls[1]&obj@lakearea<=Ls[2]]
+
+    }else if(input$LTType=="GDD"){
+      newIDs=obj@longnam[obj@GDD>=input$LGDD[1]&obj@GDD<=input$LGDD[2]]
+
+    }else if(input$LTType=="Dist."){
+
+      Ldist<-input$Ldist
+      if("All"%in%input$LPsel){
+        Ld<-rep(T,obj@npc)
+      }else{
+        Ld<-obj@pcnam%in%input$LPsel
+      }
+      Ldarr<-array(Ld,c(obj@npc,obj@nl))
+      LParr<-obj@pcxl[1,,]>=Ldist[1]&obj@pcxl[1,,]<=Ldist[2]
+      newIDs<-obj@longnam[apply(LParr&Ldarr,2,sum)==1]
+
+    }else if(input$LTType=="Stock."){
+
+      starr<-array(rep(obj@stnam%in%input$Stype,each=obj@nl),c(obj@nl,obj@nst))
+      mind<-match(input$MType,obj@misc$Mnams)
+      Sarr<-obj@lxslev[mind,,]>=(input$Slev[1]*1000) & obj@lxslev[mind,,]<=(input$Slev[2]*1000)
+      newIDs<-obj@longnam[apply(starr&Sarr,1,sum)>0]
+
+    }else if(input$LTType=="Effort"){
+
+      mind<-match(input$MType,obj@misc$Mnams)
+      effsum<-apply(obj@eff[mind,1,,,],2,sum)
+      newIDs=obj@longnam[effsum>=input$Effort[1] & effsum<=input$Effort[2]]
+
+    }else{ #"Manage."
+
+      mind<-match(input$MType,obj@misc$Mnams)
+
+      selarr<-cbind(obj@lxattr[mind,,1]%in%input$BoatRes,
+                    obj@lxattr[mind,,3]%in%input$MotorRes,
+                    obj@lxattr[mind,,4]%in%input$GearRes,
+                    obj@lxattr[mind,,6]%in%input$TakeLim)
+
+      newIDs=obj@longnam[apply(selarr,1,sum)>0]
+
+    }
+
+    selled<-input$Lsel
+    if(input$LMode=="Add"){
+      UpdateSel(c(selled,newIDs))
+      #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
+    }else if(input$LMode=="Subtract"){
+
+      UpdateSel(selled[!selled%in%newIDs])
+      #updateSelectInput(session=session,"Lsel",selected=newselled)
+    }else if(input$LMode=="Intersection"&length(input$Lsel)>0){
+      UpdateSel(selled[selled%in%newIDs])
+      #updateSelectInput(session=session,"Lsel",selected=newselled)
+    }else if(input$LMode=="Difference"&length(input$Lsel)>0){
+      newselled<-selled[!selled%in%newIDs]
+      newIDs<-newIDs[!newIDs%in%selled]
+      UpdateSel[c(newselled,newIDs)]
+      #updateSelectInput(session=session,"Lsel",selected=c(newselled,newIDs))
+    }
+
+  })
+
+  getcosts<-function(){
+    sind<-obj@stnam%in%input$stypes
+    lind<-obj@longnam%in%input$Lsel
+    if(sum(sind)>0&sum(lind)>0){
+      mind<-match(input$MType,obj@misc$Mnams)
+      costarr<-obj@Scosts[1,lind,sind]
+      sarr<-obj@lxslev[mind,lind,sind]
+      f1<-sum(sarr)/1000
+      c1<-sum(sarr*costarr)/1000
+      f2<-(input$sfac-1)*f1
+      c2<-(input$sfac-1)*c1
+      return(round(c(f1,c1,f2,c2),1))
+
+      return()
+    }else{
+      return(rep("-",4))
+    }
+  }
+
+  output$s1f <- renderText({
+
+    getcosts()[1]
+
+  })
+
+  output$s1c <- renderText({
+
+    getcosts()[2]
+
+  })
+
+  output$s2f <- renderText({
+
+    getcosts()[3]
+
+  })
+
+  output$s2c <- renderText({
+
+    getcosts()[4]
 
   })
 

@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575303046037.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C5336FB1",
+    "lastKnownWriteTime" : 1575303069,
+    "last_content_update" : 1575303069914,
+    "path" : "C:/Users/tcar_/Dropbox/SSES/Step 1 Install SSES package.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "39,17",
+        "scrollLine" : "30",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

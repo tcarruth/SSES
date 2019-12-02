@@ -23,6 +23,7 @@ if (!require('devtools'))install.packages('devtools',repos='http://cran.stat.sfu
 if (!require('TeachingDemos'))install.packages('TeachingDemos',repos='http://cran.stat.sfu.ca')
 if (!require('googleway'))install.packages('googleway',repos='http://cran.stat.sfu.ca')
 if (!require('leaflet'))install.packages('leaflet',repos='http://cran.stat.sfu.ca')
+if (!require('DT'))install.packages('DT',repos='http://cran.stat.sfu.ca')
 
 
 # --- Install SSES R package from Github repo ------------------------------------------------------------------------------
@@ -43,6 +44,7 @@ library(wordcloud)
 library(TeachingDemos)
 library(leaflet)
 library(googleway)
+library(DT)
 
 
 

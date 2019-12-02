@@ -7,12 +7,12 @@
     "folds" : "",
     "hash" : "0",
     "id" : "47FF20AA",
-    "lastKnownWriteTime" : 1575073748,
-    "last_content_update" : 1575073748604,
+    "lastKnownWriteTime" : 1575259870,
+    "last_content_update" : 1575259870982,
     "path" : "C:/GitHub/SSES/inst/shiny_apps/SSES/global.R",
     "project_path" : "inst/shiny_apps/SSES/global.R",
     "properties" : {
-        "cursorPosition" : "7,0",
+        "cursorPosition" : "5,43",
         "scrollLine" : "0"
     },
     "read_only" : false,
