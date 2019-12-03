@@ -24,6 +24,7 @@ if (!require('TeachingDemos'))install.packages('TeachingDemos',repos='http://cra
 if (!require('googleway'))install.packages('googleway',repos='http://cran.stat.sfu.ca')
 if (!require('leaflet'))install.packages('leaflet',repos='http://cran.stat.sfu.ca')
 if (!require('DT'))install.packages('DT',repos='http://cran.stat.sfu.ca')
+if (!require('abind'))install.packages('abind',repos='http://cran.stat.sfu.ca')
 
 
 # --- Install SSES R package from Github repo ------------------------------------------------------------------------------
@@ -45,6 +46,7 @@ library(TeachingDemos)
 library(leaflet)
 library(googleway)
 library(DT)
+library(abind)
 
 
 

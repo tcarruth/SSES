@@ -103,7 +103,7 @@ shinyUI(
                   actionButton("Load","Load"),
                   actionButton("Save","Save")
            ),
-           column(6,h5("Default landscape object TC Nov 2019")),
+           column(6,h5(paste0(obj@Name,", n lakes = ",obj@nl,", n pop. centres = ",obj@npc))),
            column(2,h4("Management Layer:")),
            column(2,
                   selectInput("MType",label=NULL,choices=obj@misc$Mnams,selected=obj@misc$Mnams[length(obj@misc$Mnams)])
@@ -119,8 +119,13 @@ shinyUI(
 
     column(5,
 
-      tabsetPanel(id = "tabs",selected=1,
-       tabPanel("Select Lakes",
+      tabsetPanel(id = "tabs",selected=2,
+
+       tabPanel("Landscape Info",
+                h5("Performance Vizualization options"),value=2
+       ),
+
+       tabPanel("Additional Selection Tools",
 
                 column(12,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersection","Difference"),selected="Add",inline=TRUE),style="padding-top:25px"),
 
@@ -129,35 +134,35 @@ shinyUI(
                 # Selection methods by Attribute
                 column(9,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","Stock.","Effort","Manage."),selected="Size",inline=TRUE)),
                 column(12,style="height:250px; padding-left:40px",
-                  conditionalPanel("input.LTType=='Size'",
-                                   column(12, sliderInput("LSize","Hectares",0,round(quantile(obj@lakearea,0.98)/100,0)*100,value=c(100,200),step=1,round=T))
+                       conditionalPanel("input.LTType=='Size'",
+                                        column(12, sliderInput("LSize","Hectares",0,round(quantile(obj@lakearea,0.98)/100,0)*100,value=c(100,200),step=1,round=T))
 
-                  ),
-                  conditionalPanel("input.LTType=='GDD'",
-                                   column(12, sliderInput("LGDD","Growing Degree Days",0,round(max(obj@GDD)*1.02,0),value=c(1000,1200),step=5,round=T))
+                       ),
+                       conditionalPanel("input.LTType=='GDD'",
+                                        column(12, sliderInput("LGDD","Growing Degree Days",0,round(max(obj@GDD)*1.02,0),value=c(1000,1200),step=5,round=T))
 
-                  ),
-                  conditionalPanel("input.LTType=='Dist.'",
-                                   column(12, sliderInput("Ldist","Road kilometers",0,round(max(obj@pcxl)/1000,0)*1000,value=c(200,400),step=5,round=T)),
-                                   column(12, selectInput("LPsel","From pop. center:",choices=c("All",obj@pcnam),selected="All",multiple=TRUE))
-                  ),
-                  conditionalPanel("input.LTType=='Stock.'",
-                                   column(12, checkboxGroupInput("Stype","Stocking type",choices=obj@stnam,selected=obj@stnam[1],inline=TRUE)),
-                                   column(12, sliderInput("Slev","Stocking numbers (,000s)",0,round((max(obj@lxslev)*1.05)/10000,0)*10,value=c(5,20),step=1,round=T)),
+                       ),
+                       conditionalPanel("input.LTType=='Dist.'",
+                                        column(12, sliderInput("Ldist","Road kilometers",0,round(max(obj@pcxl)/1000,0)*1000,value=c(200,400),step=5,round=T)),
+                                        column(12, selectInput("LPsel","From pop. center:",choices=c("All",obj@pcnam),selected="All",multiple=TRUE))
+                       ),
+                       conditionalPanel("input.LTType=='Stock.'",
+                                        column(12, checkboxGroupInput("Stype","Stocking type",choices=obj@stnam,selected=obj@stnam[1],inline=TRUE)),
+                                        column(12, sliderInput("Slev","Stocking numbers (,000s)",0,round((max(obj@lxslev)*1.05)/10000,0)*10,value=c(5,20),step=1,round=T)),
 
-                  ),
-                  conditionalPanel("input.LTType=='Effort'",
-                                   column(12, sliderInput("Effort","Annual fishing effort (days)",0,round((max(apply(obj@eff[1,1,,,],2,sum))*1.01)/100)*100,value=c(100,500),step=10,round=T))
+                       ),
+                       conditionalPanel("input.LTType=='Effort'",
+                                        column(12, sliderInput("Effort","Annual fishing effort (days)",0,round((max(apply(obj@eff[1,1,,,],2,sum))*1.01)/100)*100,value=c(100,500),step=10,round=T))
 
-                  ),
-                  conditionalPanel("input.LTType=='Manage.'",
-                                   column(6, checkboxGroupInput("BoatRes","Boat Restrictions",choiceNames=BoatRes,choiceValues=1:length(BoatRes),inline=TRUE)),
-                                   column(6, checkboxGroupInput("MotorRes","Motor Restrictions",choiceNames=MotorRes,choiceValues=1:length(MotorRes),inline=TRUE)),
-                                   column(6, checkboxGroupInput("GearRes","Gear Restrictions",choiceNames=GearRes,choiceValues=1:length(GearRes),inline=TRUE)),
-                                   column(6, checkboxGroupInput("TakeLim","Take Limit",choiceNames=TakeLim,choiceValues=1:length(TakeLim),inline=TRUE))
-                  ),
-                  column(8),
-                  column(12,actionButton("LAttSel","Select",style="color:red"),style="padding-top:5px; padding-left:15px")
+                       ),
+                       conditionalPanel("input.LTType=='Manage.'",
+                                        column(6, checkboxGroupInput("BoatRes","Boat Restrictions",choiceNames=BoatRes,choiceValues=1:length(BoatRes),inline=TRUE)),
+                                        column(6, checkboxGroupInput("MotorRes","Motor Restrictions",choiceNames=MotorRes,choiceValues=1:length(MotorRes),inline=TRUE)),
+                                        column(6, checkboxGroupInput("GearRes","Gear Restrictions",choiceNames=GearRes,choiceValues=1:length(GearRes),inline=TRUE)),
+                                        column(6, checkboxGroupInput("TakeLim","Take Limit",choiceNames=TakeLim,choiceValues=1:length(TakeLim),inline=TRUE))
+                       ),
+                       column(8),
+                       column(12,actionButton("LAttSel","Select",style="color:red"),style="padding-top:5px; padding-left:15px")
 
 
                 ), # end of fixed height box
@@ -168,15 +173,12 @@ shinyUI(
                 column(12,style="padding-top:5px; padding-left:15px",hr(),
                        h4("Selected Lakes:")),
                 div(style='height:300px; overflow-y: scroll; width: 95%',
-                  column(12,style="padding:18px",
-                         selectInput("Lsel",label=NULL,choices=obj@longnam,selected="",multiple=TRUE)
-                  )
+                    column(12,style="padding:18px",
+                           selectInput("Lsel",label=NULL,choices=obj@longnam,selected="",multiple=TRUE)
+                    )
                 )
                 ,value=1),
 
-       tabPanel("Characteristics",
-                h5("Performance vizualization options"),value=2
-       ),
 
        tabPanel("Performance",
                 h5("Performance vizualization options"),value=3
@@ -185,20 +187,22 @@ shinyUI(
        tabPanel("Management Scenarios",
                 column(12,style="padding-top:15px; padding-left:0px",
 
-                       h4("Edit Regulations"),
-                       column(6, radioButtons("EBoatRes","Boat Restrictions",choiceNames=BoatRes,choiceValues=1:length(BoatRes),inline=TRUE,selected=character(0))),
-                       column(6, radioButtons("EMotorRes","Motor Restrictions",choiceNames=MotorRes,choiceValues=1:length(MotorRes),inline=TRUE,selected=character(0))),
-                       column(6, radioButtons("EGearRes","Gear Restrictions",choiceNames=GearRes,choiceValues=1:length(GearRes),inline=TRUE,selected=character(0))),
-                       column(6, radioButtons("ETakeLim","Take Limit",choiceNames=TakeLim,choiceValues=1:length(TakeLim),inline=TRUE,selected=character(0)))
-
+                       h4("Edit Regulations (NC = no changes)")
+                ),
+                column(12,style="padding-top:0px; padding-left:40px",
+                       column(6, radioButtons("EBoatRes","Boat Restrictions",choiceNames=c("NC",BoatRes),choiceValues=0:length(BoatRes),inline=TRUE)),
+                       column(6, radioButtons("EMotorRes","Motor Restrictions",choiceNames=c("NC",MotorRes),choiceValues=0:length(MotorRes),inline=TRUE)),
+                       column(6, radioButtons("EGearRes","Gear Restrictions",choiceNames=c("NC",GearRes),choiceValues=0:length(GearRes),inline=TRUE)),
+                       column(6, radioButtons("ETakeLim","Take Limit",choiceNames=c("NC",TakeLim),choiceValues=0:length(TakeLim),inline=TRUE)),
+                       #column(12,actionButton("Deselect","No regulation changes",style="color:blue"))
                 ),
 
                 column(12,style="padding-top:15px; padding-left:0px",
                        hr(),
-                       column(2,h4("Edit Stocking")),
-                       column(6,style="padding-top:8px",radioButtons("Scontrol",label=NULL,choices=c("Individual","Group"),inline=T))
+                       column(2,h4("Edit Stocking"),style="padding-left:0px"),
+                       column(6,style="padding-top:8px; padding-left:40px",radioButtons("Scontrol",label=NULL,choices=c("Individual","Group"),inline=T))
                 ),
-                column(12,style="padding-top:15px;",
+                column(12,style="padding-top:15px;padding-left:40px",
                        conditionalPanel("input.Scontrol=='Individual'",
                           column(12,
                                  DTOutput("SelAtt")
@@ -219,7 +223,14 @@ shinyUI(
                                 DTOutput("GrpAtt")
                          )
                        )
-                )
+                ),
+
+                column(4,style="padding-left:0px",hr(),actionButton("AppMan","Apply Management Changes to M. Layer"),hr()),
+                column(4,
+                       hr(style="border-color:green"),
+                       actionButton("Calc","RE-CALCULATE EFFORT DISTRIBUTION",style='color:green'),
+                       hr(style="border-color: green")
+                ),
 
                 ,value=4),
 

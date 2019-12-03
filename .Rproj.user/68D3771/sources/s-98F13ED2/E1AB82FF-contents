@@ -143,7 +143,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$Lmap_marker_click, {
     out <- input$Lmap_marker_click
-    AM(out)
+    #AM(out)
     selled<-input$Lsel
     if(sum(out[1]%in%selled)>0){
       tosel=selled[selled!=out[1]]
@@ -158,17 +158,17 @@ options(shiny.maxRequestSize=1000*1024^2)
   })
 
   UpdateSel<-function(tosel){ # temporary function for when attributes should be shown
-    saveRDS(tosel,file="C:/temp/tosel.rda")
+    #saveRDS(tosel,file="C:/temp/tosel.rda")
     if(length(tosel)>0){
       tosel<-unique(tosel)
       updateSelectInput(session=session,"Lsel",selected=tosel)
       mind<-match(input$MType,obj@misc$Mnams)
       Lind<-obj@longnam%in%tosel
       smat<-matrix(obj@lxslev[mind,Lind,],nrow=length(tosel))
-      x<-data.frame(smat)
-      names(x)<-obj@stnam
-      row.names(x)<-obj@longnam[Lind]
-      output$SelAtt<-renderDT(x, selection = 'none', editable = obj@stnam)
+      x<<-data.frame(smat)
+      names(x)<<-obj@stnam
+      row.names(x)<<-obj@longnam[Lind]
+      output$SelAtt<-renderDT(x, selection = 'none', editable = T)
       x2<-as.data.frame(matrix(apply(smat,2,sum)/1000,ncol=length(obj@stnam)))
       names(x2)<-obj@stnam
       row.names(x2)<-paste0("All lakes (n = ",sum(Lind),")")
@@ -255,6 +255,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   })
 
+
+
   getcosts<-function(){
     sind<-obj@stnam%in%input$stypes
     lind<-obj@longnam%in%input$Lsel
@@ -295,6 +297,51 @@ options(shiny.maxRequestSize=1000*1024^2)
   output$s2c <- renderText({
 
     getcosts()[4]
+
+  })
+
+  observeEvent(input$MakeNewMan,{
+
+    tocopy<-match(input$MType,obj@misc$Mnams)
+    obj<<-AddMan(obj,tocopy=tocopy)
+    newnams<-c(obj@misc$Mnams,input$NewMan)
+    updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
+    obj@misc$Mnams<<-newnams
+
+  })
+
+  observeEvent(input$AppMan,{
+
+    Lind<-obj@longnam%in%input$Lsel
+    mind<-match(input$MType,obj@misc$Mnams)
+
+    boats<-input$EBoatRes
+    if(boats>0)obj@lxattr[mind,Lind,1]<-boats
+    motors<-input$MotorRes
+    if(motors>0)obj@lxattr[mind,Lind,3]<-motors
+    gears<-input$GearRes
+    if(gears>0)obj@lxattr[mind,Lind,4]<-gears
+    take<-input$TakeLim
+    if(take>0)obj@lxattr[mind,Lind,6]<-take
+
+    stsel<-input$stypes
+    if(sum(stsel%in%obj@stnam)>0){
+
+      obj@lxslev[mind,lind,stsel%in%obj@stnam]<-obj@lxslev[mind,lind,stsel%in%obj@stnam]*input$sfac
+
+    }
+
+  })
+
+  observeEvent(input$SelAtt_cell_edit, {
+    info = input$SelAtt_cell_edit
+    i = info$row
+    j = info$col
+    v = info$value
+    lind<-match(input$Lsel[i],obj@longnam)
+    mind<-match(input$MType,obj@misc$Mnams)
+    obj@lxslev[mind,lind,j]<<-v
+    print(obj@lxslev[,lind,])
 
   })
 

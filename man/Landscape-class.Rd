@@ -139,7 +139,7 @@ Landscape objects can be modified, subsetted and adapted using a range of SSES f
 
 \item{\code{acc_a}}{Numeric. The optimized slope parameter converting the access metric into a lake gravity term}
 
-\item{\code{misc}}{data.frame. Somewhere to store stuff}
+\item{\code{misc}}{list. Somewhere to store stuff}
 
 \item{\code{sel}}{Array. Age selectivity of anglers (simulation, age)}
 
