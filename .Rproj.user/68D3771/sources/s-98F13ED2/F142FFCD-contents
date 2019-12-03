@@ -81,7 +81,7 @@ shinyUI(
       column(3,style="padding-top:15px;height:55px",
           column(3),
           column(4,tags$a(img(src = "FFS.jpg", height = 50, width = 110),href="https://www.gofishbc.com/",target='_blank')),
-          column(4,tags$a(img(src = "logo 1.png", height = 54, width = 150),href="http://www.bluematter.ca/",target='_blank'))
+          column(4,tags$a(img(src = "logo 1.png", height = 44, width = 150),href="http://www.bluematter.ca/",target='_blank'))
 
       )
 
