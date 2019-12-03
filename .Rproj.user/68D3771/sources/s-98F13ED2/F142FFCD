@@ -7,13 +7,13 @@
     "folds" : "",
     "hash" : "0",
     "id" : "F142FFCD",
-    "lastKnownWriteTime" : 1575351826,
-    "last_content_update" : 1575351826844,
+    "lastKnownWriteTime" : 1575362675,
+    "last_content_update" : 1575362675578,
     "path" : "C:/GitHub/SSES/inst/shiny_apps/SSES/ui.R",
     "project_path" : "inst/shiny_apps/SSES/ui.R",
     "properties" : {
-        "cursorPosition" : "208,49",
-        "scrollLine" : "202"
+        "cursorPosition" : "289,17",
+        "scrollLine" : "279"
     },
     "read_only" : false,
     "read_only_alternatives" : [

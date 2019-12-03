@@ -3,6 +3,7 @@ library(SSES)
 library(leaflet)
 library(leaflet.extras)
 library(sp)
+library(abind)
 
 shinyServer(function(input, output, session) {
 
@@ -14,7 +15,9 @@ options(shiny.maxRequestSize=1000*1024^2)
     leaflet() %>%
       addTiles()%>%
       fitBounds(lng1=as.vector(quantile(obj@lakex,0.02)),lng2=as.vector(quantile(obj@lakex,0.98)),
-                lat1=as.vector(quantile(obj@lakey,0.01)),lat2=as.vector(quantile(obj@lakey,0.95))) %>%
+                lat1=as.vector(quantile(obj@lakey,0.01)),lat2=as.vector(quantile(obj@lakey,0.95)))%>%
+    addControl(actionButton("LClear","Clear"),position="topright")%>%
+      addControl(actionButton("LAll","All"),position="topright")%>%
       addDrawToolbar(
         position="topright",
         targetGroup='Selected',
@@ -29,6 +32,7 @@ options(shiny.maxRequestSize=1000*1024^2)
                                                                         ,weight = 3)),
         circleOptions = FALSE,
         editOptions = editToolbarOptions(edit = FALSE, selectedPathOptions = selectedPathOptions()))
+
   })
 
   observeEvent(input$Lmap_draw_new_feature,{
@@ -164,16 +168,39 @@ options(shiny.maxRequestSize=1000*1024^2)
       updateSelectInput(session=session,"Lsel",selected=tosel)
       mind<-match(input$MType,obj@misc$Mnams)
       Lind<-obj@longnam%in%tosel
+
+      # Stocking tables
       smat<-matrix(obj@lxslev[mind,Lind,],nrow=length(tosel))
       x<<-data.frame(smat)
       names(x)<<-obj@stnam
       row.names(x)<<-obj@longnam[Lind]
-      output$SelAtt<-renderDT(x, selection = 'none', editable = T)
+      output$SelAtt<-renderDT(x, selection = 'none', editable = T,options=list(pageLength=15,lengthMenu = c(5, 10, 15)))
       x2<-as.data.frame(matrix(apply(smat,2,sum)/1000,ncol=length(obj@stnam)))
       names(x2)<-obj@stnam
       row.names(x2)<-paste0("All lakes (n = ",sum(Lind),")")
       output$GrpAtt<-renderDT(x2, selection = 'none',escape=FALSE, caption='',
                               class = 'display',options = list(dom = 't'))
+
+      # Regulation tables
+      BoatRes<<-c("No boats","Car top","Trailer")
+      MotorRes<<-c("Any","Less than 10hp","Elec. only")
+      GearRes<<-c("None","Bait ban","Barbless","Fly only")
+      TakeLim<<-c("No take","1 fish","4 fish","5+ fish")
+
+      rmat<-cbind(BoatRes[obj@lxattr[mind,Lind,1]],
+                  MotorRes[obj@lxattr[mind,Lind,3]],
+                  GearRes[obj@lxattr[mind,Lind,4]],
+                  TakeLim[obj@lxattr[mind,Lind,6]])
+      xr<<-data.frame(rmat)
+      names(xr)<<-c("Boat","Motor","Gear","Take")
+      row.names(xr)<<-obj@longnam[Lind]
+      output$RegAtt<-renderDT(xr, selection = 'none', editable = T,options=list(pageLength=15,lengthMenu = c(5, 10, 15)))
+
+
+      #xr2<-
+      #output$RegGrpAtt<-renderDTclass(xr2, selection = 'none',escape=FALSE, caption='',
+      #                        class = 'display',options = list(dom = 't'))
+
     }else{
       updateSelectInput(session=session,"Lsel",choices=obj@longnam,selected=NULL)
       nulltab<-data.frame(matrix(rep("-",length(obj@nst)),ncol=obj@nst))
@@ -307,29 +334,42 @@ options(shiny.maxRequestSize=1000*1024^2)
     newnams<-c(obj@misc$Mnams,input$NewMan)
     updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
     obj@misc$Mnams<<-newnams
+    updateSelectInput(session,"Del",choices=newnams)
+    UpScen()
 
   })
 
-  observeEvent(input$AppMan,{
+  observeEvent(input$AppRegs,{
 
     Lind<-obj@longnam%in%input$Lsel
     mind<-match(input$MType,obj@misc$Mnams)
 
     boats<-input$EBoatRes
-    if(boats>0)obj@lxattr[mind,Lind,1]<-boats
-    motors<-input$MotorRes
-    if(motors>0)obj@lxattr[mind,Lind,3]<-motors
-    gears<-input$GearRes
-    if(gears>0)obj@lxattr[mind,Lind,4]<-gears
-    take<-input$TakeLim
-    if(take>0)obj@lxattr[mind,Lind,6]<-take
+    print(boats)
+    if(boats>0)obj@lxattr[mind,Lind,1]<<-as.numeric(boats)
+    motors<-input$EMotorRes
+    if(motors>0)obj@lxattr[mind,Lind,3]<<-as.numeric(motors)
+    gears<-input$EGearRes
+    if(gears>0)obj@lxattr[mind,Lind,4]<<-as.numeric(gears)
+    take<-input$ETakeLim
+    if(take>0)obj@lxattr[mind,Lind,6]<<-as.numeric(take)
+    UpdateSel(input$Lsel)
+
+  })
+
+  observeEvent(input$AppStks,{
+
+    Lind<-obj@longnam%in%input$Lsel
+    mind<-match(input$MType,obj@misc$Mnams)
 
     stsel<-input$stypes
+    print(stsel)
     if(sum(stsel%in%obj@stnam)>0){
 
-      obj@lxslev[mind,lind,stsel%in%obj@stnam]<-obj@lxslev[mind,lind,stsel%in%obj@stnam]*input$sfac
+      obj@lxslev[mind,Lind,stsel%in%obj@stnam]<-obj@lxslev[mind,Lind,stsel%in%obj@stnam]*input$sfac
 
     }
+    UpdateSel(input$Lsel)
 
   })
 
@@ -340,8 +380,71 @@ options(shiny.maxRequestSize=1000*1024^2)
     v = info$value
     lind<-match(input$Lsel[i],obj@longnam)
     mind<-match(input$MType,obj@misc$Mnams)
-    obj@lxslev[mind,lind,j]<<-v
-    print(obj@lxslev[,lind,])
+    obj@lxslev[mind,lind,j]<<-as.numeric(v)
+    #print(obj@lxslev[,lind,])
+
+  })
+
+
+  observeEvent(input$RegAtt_cell_edit, {
+    info = input$RegAtt_cell_edit
+    i = info$row
+    j = info$col
+    v = info$value
+    if(j==1)v2<-match(v,BoatRes)
+    if(j==2)v2<-match(v,MotorRes)
+    if(j==3)v2<-match(v,GearRes)
+    if(j==4)v2<-match(v,TakeLim)
+    j2<-c(1,3,4,6)[j]
+    lind<-match(input$Lsel[i],obj@longnam)
+    mind<-match(input$MType,obj@misc$Mnams)
+    obj@lxattr[mind,lind,j2]<<-as.numeric(v2)
+    #print(obj@lxslev[,lind,])
+
+  })
+
+  observeEvent(input$Rename_cell_edit, {
+    info = input$Rename_cell_edit
+    i = info$row
+    j = info$col
+    v = info$value
+    obj@misc$Mnams[i]<<-v
+    newnams<-obj@misc$Mnams
+    updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
+    updateSelectInput(session,"Del",choices=newnams)
+    #print(obj@lxslev[,lind,])
+
+  })
+
+  observeEvent(input$MType,{
+
+    UpdateSel(input$Lsel)
+
+  })
+
+  UpScen<-function(){
+    Scenarios<-as.data.frame(obj@misc$Mnams)
+    names(Scenarios)<-"Scenarios"
+    row.names(Scenarios)<-1:length(obj@misc$Mnams)
+    output$Rename<-renderDT(Scenarios, selection = 'none',escape=FALSE, caption='',
+                            class = 'display',options = list(dom = 't'),editable=T)
+  }
+
+  observeEvent(input$tabs,{
+    UpScen()
+
+  })
+
+  observeEvent(input$DelMan,{
+
+    # delete a management option
+    todel<-match(input$Del,obj@misc$Mnams)
+    obj<<-DelMan(obj,todel)
+    obj@misc$Mnams<<- obj@misc$Mnams[obj@misc$Mnams!=input$Del]
+    newnams<-obj@misc$Mnams
+    updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
+    updateSelectInput(session,"Del",choices=newnams)
+    UpScen()
 
   })
 

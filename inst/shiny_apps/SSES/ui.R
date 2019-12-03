@@ -73,15 +73,15 @@ shinyUI(
       column(1,style="height:65px",
              tags$a(h1("SSES"),href="https://github.com/tcarruth/SSES",target='_blank')
       ),
-      column(3,style="height:65px",
-             h5(textOutput("Version") ,style="padding:22px;")
+      column(3,style="height:55px;padding-top:13px",
+             h5(textOutput("Version") ,style="padding:10px;")
       ),
       column(5),
 
-      column(3,style="padding:14px;height:65px",
-
-          column(6,tags$a(img(src = "FFS.jpg", height = 50, width = 110),href="https://www.gofishbc.com/",target='_blank')),
-          column(6,tags$a(img(src = "logo 1.png", height = 52, width = 150),href="http://www.bluematter.ca/",target='_blank'))
+      column(3,style="padding-top:15px;height:55px",
+          column(3),
+          column(4,tags$a(img(src = "FFS.jpg", height = 50, width = 110),href="https://www.gofishbc.com/",target='_blank')),
+          column(4,tags$a(img(src = "logo 1.png", height = 54, width = 150),href="http://www.bluematter.ca/",target='_blank'))
 
       )
 
@@ -90,7 +90,7 @@ shinyUI(
     hr(),
 
     h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery options.",style = "color:black"),
-    h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " consult the ", a("manual", href="https://dlmtool.github.io/DLMtool/MERA/MERA_User_Guide_5_1.html", target="_blank")," or read the ", a("paper.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
+    h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " consult the ", a("manual", href="https://github.com/tcarruth/SSES", target="_blank")," or read the ", a("paper.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
     h5("For technical questions or bug reports please contact ", a("bluemattersci@gmail.com", href="mailto:bluemattersci@gmail.com", target="_blank"),style = "color:grey"),
     column(12,hr()),
     #column(7,
@@ -99,12 +99,9 @@ shinyUI(
 
     fluidRow(
     column(7,
-           column(2,
-                  actionButton("Load","Load"),
-                  actionButton("Save","Save")
-           ),
-           column(6,h5(paste0(obj@Name,", n lakes = ",obj@nl,", n pop. centres = ",obj@npc))),
-           column(2,h4("Management Layer:")),
+
+           column(8,h5(paste0(obj@Name,", n lakes = ",obj@nl,", n pop. centres = ",obj@npc))),
+           column(2,h5("Management Scenario:")),
            column(2,
                   selectInput("MType",label=NULL,choices=obj@misc$Mnams,selected=obj@misc$Mnams[length(obj@misc$Mnams)])
           ),
@@ -113,11 +110,14 @@ shinyUI(
       ),
 
       column(12, style="padding:18px",
-          textAreaInput("Log", "Log",height="125px"),
+         div(style='height:125px; overflow-y: scroll; width: 100%',
+            selectInput("Lsel",label="Selected Lakes:",choices=obj@longnam,selected="",multiple=TRUE)
+             #textAreaInput("Log", "Log",height="125px"),
+         )
       )
     ),
 
-    column(5,
+    column(5,style="padding:0px;height:770px",
 
       tabsetPanel(id = "tabs",selected=3,
 
@@ -129,12 +129,13 @@ shinyUI(
                 h5("Performance vizualization options"),value=2
        ),
 
-       tabPanel("Extended Selection",
+       tabPanel("Ext. Selection",
+                column(12,h5("Selection Mode:"),style='padding-top:15px'),
+                column(12,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersection","Difference"),selected="Add",inline=TRUE),style="padding-top:0px"),
 
-                column(12,radioButtons("LMode",label=NULL,choices=c("Add","Subtract","Intersection","Difference"),selected="Add",inline=TRUE),style="padding-top:25px"),
+                column(12,hr(),style="padding:0px"),
 
-                column(12,style="padding-top:10px"),
-
+                column(12,h5("Select by attributes:")),
                 # Selection methods by Attribute
                 column(9,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","Stock.","Effort","Manage."),selected="Size",inline=TRUE)),
                 column(12,style="height:280px; padding-left:40px",
@@ -170,89 +171,147 @@ shinyUI(
 
 
                 ), # end of fixed height box
-                column(12,style="padding-top:10px; padding-left:15px",
-                       actionButton("LAll","Select all lakes",style="color:red"),
-                       actionButton("LClear","Clear all lakes",style="color:blue")
-                ),
-                column(12,style="padding-top:5px; padding-left:15px",hr(),
-                       h4("Selected Lakes:")),
-                div(style='height:300px; overflow-y: scroll; width: 95%',
-                    column(12,style="padding:18px",
-                           selectInput("Lsel",label=NULL,choices=obj@longnam,selected="",multiple=TRUE)
-                    )
-                )
-                ,value=3),
+                #column(12,style="padding-top:10px; padding-left:15px",
+                       #actionButton("LAll","Select all lakes",style="color:red"),
+                       #actionButton("LClear","Clear all lakes",style="color:blue")
+                #),
+                #column(12,style="padding-top:5px; padding-left:15px",hr(),
+                 #      h4("Selected Lakes:")),
+               # div(style='height:300px; overflow-y: scroll; width: 95%',
+                #    column(12,style="padding:18px",
+                          # selectInput("Lsel",label=NULL,choices=obj@longnam,selected="",multiple=TRUE)
+                 #   )
+                #)
+                value=3),
 
 
 
-       tabPanel("Management Scenarios",
+       tabPanel("Regulations",
+
                 column(12,style="padding-top:15px; padding-left:0px",
 
-                       h4("Edit Regulations (NC = no changes)")
-                ),
-                column(12,style="padding-top:0px; padding-left:40px",
-                       column(6, radioButtons("EBoatRes","Boat Restrictions",choiceNames=c("NC",BoatRes),choiceValues=0:length(BoatRes),inline=TRUE)),
-                       column(6, radioButtons("EMotorRes","Motor Restrictions",choiceNames=c("NC",MotorRes),choiceValues=0:length(MotorRes),inline=TRUE)),
-                       column(6, radioButtons("EGearRes","Gear Restrictions",choiceNames=c("NC",GearRes),choiceValues=0:length(GearRes),inline=TRUE)),
-                       column(6, radioButtons("ETakeLim","Take Limit",choiceNames=c("NC",TakeLim),choiceValues=0:length(TakeLim),inline=TRUE)),
-                       #column(12,actionButton("Deselect","No regulation changes",style="color:blue"))
-                ),
-
-                column(12,style="padding-top:0px; padding-left:0px",
-                       hr(),
-                       column(2,h4("Edit Stocking"),style="padding-left:0px"),
-                       column(6,style="padding-top:8px; padding-left:40px",radioButtons("Scontrol",label=NULL,choices=c("Individual","Group"),inline=T))
-                ),
-                column(12,style="padding-top:10px;padding-left:40px",
-                       conditionalPanel("input.Scontrol=='Individual'",
-                          column(12,
-                                 DTOutput("SelAtt")
-                          )
+                       column(2,style="padding-top:8px",
+                              h5("Edit by:")
                        ),
-                       conditionalPanel("input.Scontrol=='Group'",
-                         column(12,checkboxGroupInput("stypes","Stocking type:",choices=obj@stnam,inline=T)),
-                         column(12,sliderInput("sfac","Stocking factor (1 is existing level):",0,5,1,step=0.02)),
-                         column(3,h5("Current No. fish (k):")),
-                         column(3,h5("Current cost ($k)")),
-                         column(3,h5("Proposed fish inc (k):")),
-                         column(3,h5("Proposed cost inc ($k):")),
-                         column(3,textOutput("s1f")),
-                         column(3,textOutput("s1c")),
-                         column(3,textOutput("s2f")),
-                         column(3,textOutput("s2c")),
-                         column(12,
-                                DTOutput("GrpAtt")
-                         )
+                       column(10,style="padding-top:15px",
+                              radioButtons("Rcontrol",label=NULL,choices=c("Individual lakes","Group of lakes"),inline=T)
                        )
                 ),
-                column(12,hr(),style="padding-left:0px"),
+                column(12, hr(),style="padding-left:0px"),
+                conditionalPanel("input.Rcontrol=='Group of lakes'",
+                  column(12,style="padding-top:0px; padding-left:20px",
+                     column(6, radioButtons("EBoatRes","Boat Restrictions",choiceNames=c("NC",BoatRes),choiceValues=0:length(BoatRes),inline=TRUE)),
+                     column(6, radioButtons("EMotorRes","Motor Restrictions",choiceNames=c("NC",MotorRes),choiceValues=0:length(MotorRes),inline=TRUE)),
+                     column(6, radioButtons("EGearRes","Gear Restrictions",choiceNames=c("NC",GearRes),choiceValues=0:length(GearRes),inline=TRUE)),
+                     column(6, radioButtons("ETakeLim","Take Limit",choiceNames=c("NC",TakeLim),choiceValues=0:length(TakeLim),inline=TRUE)),
+                     #column(12,actionButton("Deselect","No regulation changes",style="color:blue"))
+                     #column(12,
+                    #        DTOutput("RegGrpAtt")
+                     #),
+                     column(4,style="padding-top:0px",
 
-                column(4,style="padding-left:0px; padding-top:33px",
-                       actionButton("MakeNewMan","Copy Current M Layer:"),
-                       textInput("NewMan",label=NULL,"Alternative 2")
+                            actionButton("AppRegs","Apply Changes to Selection",style="color:red")
 
+                     )
+                  )
                 ),
-                column(4,style="padding-top:0px",
-                       hr(style="border-color:red"),
-                       actionButton("AppMan","Apply Changes to Selection",style="color:red"),
-                       hr(style="border-color: red")
+                column(12,style="padding-left:20px;padding-top:10px",
+                  conditionalPanel("input.Rcontrol=='Individual lakes'",
+
+                     column(12,
+                            DTOutput("RegAtt")
+                     )
+
+                  )
                 ),
-                column(4,style="padding-top:0px",
-                       hr(style="border-color:green"),
-                       actionButton("Calc","RE-CALCULATE EFFORT",style='color:green'),
-                       hr(style="border-color: green")
-                )
 
+            ,value=4),
 
-                ,value=4),
+      tabPanel("Stocking",
+
+               column(12,style="padding-top:15px; padding-left:0px",
+
+                      column(2,style="padding-top:8px",
+                             h5("Edit by:")
+                      ),
+                      column(10,style="padding-top:15px",
+                             radioButtons("Scontrol",label=NULL,choices=c("Individual lakes","Group of lakes"),inline=T)
+                      )
+               ),
+               column(12, hr(),style="padding-left:0px"),
+               column(12,style="padding-top:10px;padding-left:20px",
+                      conditionalPanel("input.Scontrol=='Individual lakes'",
+                                       column(12,
+                                              DTOutput("SelAtt")
+                                       )
+                      ),
+                      conditionalPanel("input.Scontrol=='Group of lakes'",
+                                       column(12,checkboxGroupInput("stypes","Stocking type(s) to edit:",choices=obj@stnam,inline=T)),
+                                       column(12,sliderInput("sfac","Stocking factor (multiplier of current level):",0,5,1,step=0.02)),
+                                       column(3,h5("Current No. fish (k):")),
+                                       column(3,h5("Current cost ($k)")),
+                                       column(3,h5("Proposed fish inc (k):")),
+                                       column(3,h5("Proposed cost inc ($k):")),
+                                       column(3,textOutput("s1f")),
+                                       column(3,textOutput("s1c")),
+                                       column(3,textOutput("s2f")),
+                                       column(3,textOutput("s2c")),
+                                       column(12,
+                                              DTOutput("GrpAtt")
+                                       ),
+                                       column(8,style="padding-top:15px",
+
+                                              actionButton("AppStks","Apply Changes to Group Selection",style="color:red")
+
+                                       )
+                      )
+               ),
+
+               value=5),
 
       tabPanel("Options",
-               h5("<Calculation options>"),
-               h5("<Rename management layers>"),
-               value=5)
+
+               column(12, h5("File"),style="padding-top:10px"),
+               column(12,
+                      actionButton("Load","Load Landscape"),
+                      actionButton("Save","Save Landscape")
+               ),
+               column(12, hr(),style="padding:0px"),
+               column(12,h5("Organize Management Scenarios")),
+               column(5,
+                      actionButton("MakeNewMan","Copy current management scenario and name it:")
+               ),
+               column(7,
+                      textInput("NewMan",label=NULL,"Alternative 2")
+
+               ),
+               column(5,
+                      actionButton("DelMan","Delete:")
+               ),
+               column(7,
+                      selectInput("Del",label=NULL,choices=obj@misc$Mnams)
+
+               ),
+               #column(12, hr(),style="padding:0px"),
+               column(5,h5("Rename:"),style="padding-top:20px"),
+               column(7,DTOutput("Rename")),
+
+               column(12, hr()),
+               h5("Calculation options"),
+               value=6)
 
       )
 
+    ),
+
+    column(5,style='padding:0px',
+           column(12,hr(),style="padding:0px"),
+           column(3),
+           column(6,style="padding-top:7px",
+
+                  actionButton("Calc","RE-CALCULATE EFFORT",style='color:green;height:60px;width:400px;border-color:green')
+
+           )
     ),
 
 

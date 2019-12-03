@@ -282,7 +282,7 @@ replic8<-function(obj,nmanage=NA,nsim=NA){ # replicates the object over multiple
 #' @param tocopy positive integer greater than 1, the number of replicate management options
 #' @author T. Carruthers
 #' @export AddMan
-AddMan<-function(obj,tocopy=1){ # replicates the object over multiple management options
+AddMan<-function(obj,tocopy=1){
 
   obj2<-obj
   nmanage<-obj@nmanage+1
@@ -308,6 +308,33 @@ AddMan<-function(obj,tocopy=1){ # replicates the object over multiple management
   obj2
 
 }
+
+#' Delete a management option from a Landscape object
+#'
+#' @param obj an object of class 'Landscape'
+#' @param tocopy positive integer greater than 1, the number of replicate management options
+#' @author T. Carruthers
+#' @export DelMan
+DelMan<-function(obj,todel=1){
+  if(obj@nmanage>1){
+    keepind<-((1:obj@nmanage)!=todel)
+
+    obj2<-obj
+
+    obj2@lxattr<-obj@lxattr[keepind,,,drop=F]
+    obj2@lxslev<-obj@lxslev[keepind,,,drop=F]
+    obj2@pcxl<-  obj@pcxl[keepind,,,drop=F]
+    obj2@BagLim<-obj@BagLim[keepind,,drop=F]
+    obj2@couch<- obj@couch[keepind,,,,drop=F]
+    obj2@eff<-   obj@eff[keepind,,,,,drop=F]
+
+    obj2@nmanage<-obj@nmanage-1
+
+    obj2
+  }
+
+}
+
 
 
 #' Returns the names of slots that have a dimension 'simulation'
