@@ -119,10 +119,21 @@ shinyUI(
 
     column(5,style="padding:0px;height:770px",
 
-      tabsetPanel(id = "tabs",selected=3,
+      tabsetPanel(id = "tabs",selected=1,
 
        tabPanel("Landscape Info",
-                h5("Performance Vizualization options"),value=1
+
+            h5("Lake attributes"),
+            plotOutput("Land_plot",height=140),
+
+            #hr(),
+            h5("Management attributes selected Lakes",style="color:red"),
+            plotOutput("Man_plot_S",height=230),
+            #hr(),
+            h5("Management attributes all lakes",style="color:blue"),
+            plotOutput("Man_plot",height=230),
+
+          value=1
        ),
 
        tabPanel("Outcomes",
@@ -137,7 +148,7 @@ shinyUI(
 
                 column(12,h5("Select by attributes:")),
                 # Selection methods by Attribute
-                column(9,radioButtons("LTType",label=NULL,choices=c("Size","GDD","Dist.","Stock.","Effort","Manage."),selected="Size",inline=TRUE)),
+                column(9,radioButtons("LTType",label=NULL,choices=c("Region","Size","GDD","Dist.","Stock.","Eff.","Manage."),selected="Region",inline=TRUE)),
                 column(12,style="height:280px; padding-left:40px",
                        conditionalPanel("input.LTType=='Size'",
                                         column(12, sliderInput("LSize","Hectares",0,round(quantile(obj@lakearea,0.98)/100,0)*100,value=c(100,200),step=1,round=T))
@@ -165,6 +176,9 @@ shinyUI(
                                         column(6, checkboxGroupInput("MotorRes","Motor Restrictions",choiceNames=MotorRes,choiceValues=1:length(MotorRes),inline=TRUE)),
                                         column(6, checkboxGroupInput("GearRes","Gear Restrictions",choiceNames=GearRes,choiceValues=1:length(GearRes),inline=TRUE)),
                                         column(6, checkboxGroupInput("TakeLim","Take Limit",choiceNames=TakeLim,choiceValues=1:length(TakeLim),inline=TRUE))
+                       ),
+                       conditionalPanel("input.LTType=='Region'",
+                                        column(12, checkboxGroupInput("Region",label=NULL,choices=obj@misc$region_names,inline=TRUE))
                        ),
                        column(8),
                        column(12,actionButton("LAttSel","Select",style="color:red"),style="padding-top:5px; padding-left:15px")
@@ -225,7 +239,7 @@ shinyUI(
                   )
                 ),
 
-            ,value=4),
+            value=4),
 
       tabPanel("Stocking",
 
@@ -246,7 +260,7 @@ shinyUI(
                                        )
                       ),
                       conditionalPanel("input.Scontrol=='Group of lakes'",
-                                       column(12,checkboxGroupInput("stypes","Stocking type(s) to edit:",choices=obj@stnam,inline=T)),
+                                       column(12,checkboxGroupInput("stypes","Stocking type(s) to edit:",choices=obj@stnam,selected=obj@stnam,inline=T)),
                                        column(12,sliderInput("sfac","Stocking factor (multiplier of current level):",0,5,1,step=0.02)),
                                        column(3,h5("Current No. fish (k):")),
                                        column(3,h5("Current cost ($k)")),
@@ -282,7 +296,7 @@ shinyUI(
                       actionButton("MakeNewMan","Copy current management scenario and name it:")
                ),
                column(7,
-                      textInput("NewMan",label=NULL,"Alternative 2")
+                      textInput("NewMan",label=NULL,"3: Alternative")
 
                ),
                column(5,

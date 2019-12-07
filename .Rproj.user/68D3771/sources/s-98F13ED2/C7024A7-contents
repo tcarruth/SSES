@@ -1,0 +1,11 @@
+
+obj<-readRDS("C:/temp/Landscape.rda")
+load(paste0("C:/Users/tcar_/Dropbox/Trout lakes/Data/BC regions/region_list"))
+obj@misc$region_shapes<-region_list
+obj@misc$region_names<-1:8
+saveRDS(obj,"C:/temp/Landscape.rda")
+
+
+
+
+

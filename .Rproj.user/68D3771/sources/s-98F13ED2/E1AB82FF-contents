@@ -215,7 +215,22 @@ options(shiny.maxRequestSize=1000*1024^2)
   }
 
   observeEvent(input$LAttSel,{
-    if(input$LTType=="Size"){
+
+    if(input$LTType=="Region"){
+
+      regs<-match(input$Region,obj@misc$Mnams)
+      newIDs<-NULL
+      for(i in regs){
+
+        newIDs<-c(newIDs,obj@longnam[point.in.polygon(obj@lakex,obj@lakey,obj@misc$region_shapes[[i]][,1], obj@misc$region_shapes[[i]][,2])==1])
+
+      }
+
+      Ls<-input$LSize
+      if(Ls[2]==round(quantile(obj@lakearea,0.98)/100,0)*100)Ls[2]<-Inf
+      newIDs=obj@longnam[obj@lakearea>=Ls[1]&obj@lakearea<=Ls[2]]
+
+    }else if(input$LTType=="Size"){
 
       Ls<-input$LSize
       if(Ls[2]==round(quantile(obj@lakearea,0.98)/100,0)*100)Ls[2]<-Inf

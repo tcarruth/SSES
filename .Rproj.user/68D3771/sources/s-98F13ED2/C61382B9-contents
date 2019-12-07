@@ -1,8 +1,8 @@
 Package: SSES
 Type: Package
 Title: Spatial Social Ecological Systems
-Version: 1.1.1
-Date: 2019-05-27
+Version: 1.2.1
+Date: 2019-11-27
 Authors@R: 
     person("Tom", "Carruthers",, "t.carruthers@oceans.ubc.ca", role=c("aut", "cre"))
 Maintainer: Tom Carruthers <t.carruthers@oceans.ubc.ca>

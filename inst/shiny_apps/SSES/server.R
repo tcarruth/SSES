@@ -9,7 +9,22 @@ shinyServer(function(input, output, session) {
 
 options(shiny.maxRequestSize=1000*1024^2)
 
-  #data_of_click <- reactiveValues(clickedMarker = list())
+  Version<<-"1.2.1"
+  output$Version<-renderText(paste0("spatial social ecological systems (v", Version, ")"))
+  output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES')))
+
+  # Some useful things
+  USERID<-Sys.getenv()[names(Sys.getenv())=="USERNAME"]
+  SessionID<-paste0(USERID,"-",strsplit(as.character(Sys.time())," ")[[1]][1],"-",strsplit(as.character(Sys.time())," ")[[1]][2])
+  output$SessionID<-renderText(SessionID)
+
+  CurrentYr<-as.integer(substr(as.character(Sys.time()),1,4))
+  Copyright<-"Open Source, GPL-2"
+
+  obj<<-readRDS(file="./Data/Landscape_test.rda")
+
+  manage<-reactiveValues(lxslev=obj@lxslev, lxattr=obj@lxattr)
+  select<-reactiveValues(Lind=NULL,MType=NULL)
 
   output$Lmap <- renderLeaflet({
     leaflet() %>%
@@ -36,11 +51,7 @@ options(shiny.maxRequestSize=1000*1024^2)
   })
 
   observeEvent(input$Lmap_draw_new_feature,{
-    #Only add new layers for bounded locations
-    #saveRDS(shape, file="C:/temp/shape.rda")
-    #saveRDS(obj, file="C:/temp/obj.rda")
     shape = input$Lmap_draw_new_feature
-    #saveRDS(shape, file="C:/temp/shape.rda")
     if("circle"%in%unlist(shape)){
       temp<-unlist(shape)
       xy<-as.numeric(as.character(temp[grepl("coordinates",names(temp))]))
@@ -56,10 +67,9 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     }
 
-
     newIDs<-obj@longnam[point.in.polygon(obj@lakex,obj@lakey,poly$Lon, poly$Lat)==1]
 
-    selled<-input$Lsel
+    selled<-obj@longnam[select$Lind]
     if(input$LMode=="Add"){
       #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
       UpdateSel(c(selled,newIDs))
@@ -67,11 +77,11 @@ options(shiny.maxRequestSize=1000*1024^2)
       #newselled<-selled[!selled%in%newIDs]
       #updateSelectInput(session=session,"Lsel",selected=newselled)
       UpdateSel(selled[!selled%in%newIDs])
-    }else if(input$LMode=="Intersection"&length(input$Lsel)>0){
+    }else if(input$LMode=="Intersection"&length(selled)>0){
       #newselled<-selled[selled%in%newIDs]
       #updateSelectInput(session=session,"Lsel",selected=newselled)
       UpdateSel(selled[selled%in%newIDs])
-    }else if(input$LMode=="Difference"&length(input$Lsel)>0){
+    }else if(input$LMode=="Difference"&length(selled)>0){
       newselled<-selled[!selled%in%newIDs]
       newIDs<-newIDs[!newIDs%in%selled]
       UpdateSel(c(newselled,newIDs))
@@ -87,47 +97,52 @@ options(shiny.maxRequestSize=1000*1024^2)
   #output$Fpanelout <- renderText({ paste("Fishery",Fpanel(),"/ 19")})
 
   # Update UI
-  Version<<-"1.1.1"
-  output$Version<-renderText(paste0("spatial social ecological systems (v", Version, ")"))
-  output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES')))
-
-  # Some useful things
-  USERID<-Sys.getenv()[names(Sys.getenv())=="USERNAME"]
-  SessionID<-paste0(USERID,"-",strsplit(as.character(Sys.time())," ")[[1]][1],"-",strsplit(as.character(Sys.time())," ")[[1]][2])
-  output$SessionID<-renderText(SessionID)
-
-  CurrentYr<-as.integer(substr(as.character(Sys.time()),1,4))
-  Copyright<-"Open Source, GPL-2"
-
-  # Load default landscape object
-  #Ldat<<-data.frame(lng=obj@lakex,lat=obj@lakey,area=obj@lakearea,name=obj@lakenam,longname=obj@longnam,sel=rep(FALSE,obj@nl))
 
   Ldat<-reactive({
 
     newdata<-data.frame(lng=obj@lakex,lat=obj@lakey,area=as.numeric(obj@lakearea),name=obj@lakenam,longname=obj@longnam,col=rep("blue",length(obj@longnam)),stringsAsFactors = FALSE)
-    newdata$col[match(input$Lsel,obj@longnam)]<-"red"
+    #newdata$col[match(input$Lsel,obj@longnam)]<-"red"
+    newdata$col[select$Lind]<-"red"
     class(newdata$area)<-"numeric"
 
     #saveRDS(newdata,"C:/temp/newdata")
     return(newdata)
   })
 
-  Pdat<-reactive({
-    newdata<-data.frame(lng=obj@pcx,lat=obj@pcy,np=as.numeric(obj@pcsize[1,]),name=obj@pcnam,col=rep("black",length(obj@pcy)))
+  #Pdat<-reactive({
+   # newdata<-data.frame(lng=obj@pcx,lat=obj@pcy,np=as.numeric(obj@pcsize[1,]),name=obj@pcnam,col=rep("black",length(obj@pcy)))
     #newdata$col[match(input$Psel,obj@pcnam)]<-"red"
-    return(newdata)
-  })
+    #return(newdata)
+  #})
+
+
 
   # Load source code
   source("./Source/Misc/Misc.R",local=TRUE)
-  obj<-readRDS(file="./Data/Landscape.rda")
+  source("./Source/Plots/Landscape_plots.R",local=TRUE)
 
-  observeEvent(input$LAll,
+  manage<-reactiveValues(lxslev=obj@lxslev)
+
+
+  output$Man_plot_S <- renderPlot({
+    plotMan(Sel=T)
+
+  })
+
+  output$Man_plot <- renderPlot({
+    plotMan()
+
+  })
+
+  observeEvent(input$LAll,{
       updateSelectInput(session=session,"Lsel",selected=obj@longnam)
-  )
+      select$Lind<-rep(T,obj@nl)
+  })
 
-  observeEvent(input$LClear,
+  observeEvent(input$LClear,{
       updateSelectInput(session=session,"Lsel",selected="")
+      select$Lind<-rep(F,obj@nl)
+  }
   )
 
   #observe all changes go controls or tabs
@@ -148,7 +163,7 @@ options(shiny.maxRequestSize=1000*1024^2)
   observeEvent(input$Lmap_marker_click, {
     out <- input$Lmap_marker_click
     #AM(out)
-    selled<-input$Lsel
+    selled<-obj@longnam[select$Lind]
     if(sum(out[1]%in%selled)>0){
       tosel=selled[selled!=out[1]]
       UpdateSel(tosel)
@@ -163,14 +178,15 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   UpdateSel<-function(tosel){ # temporary function for when attributes should be shown
     #saveRDS(tosel,file="C:/temp/tosel.rda")
+
     if(length(tosel)>0){
       tosel<-unique(tosel)
-      updateSelectInput(session=session,"Lsel",selected=tosel)
-      mind<-match(input$MType,obj@misc$Mnams)
+      mind<-select$Mind
       Lind<-obj@longnam%in%tosel
-
+      select$Lind<-Lind
+      updateSelectInput(session=session,"Lsel",selected=tosel)
       # Stocking tables
-      smat<-matrix(obj@lxslev[mind,Lind,],nrow=length(tosel))
+      smat<-matrix(manage$lxslev[mind,Lind,],nrow=length(tosel))
       x<<-data.frame(smat)
       names(x)<<-obj@stnam
       row.names(x)<<-obj@longnam[Lind]
@@ -191,6 +207,8 @@ options(shiny.maxRequestSize=1000*1024^2)
                   MotorRes[obj@lxattr[mind,Lind,3]],
                   GearRes[obj@lxattr[mind,Lind,4]],
                   TakeLim[obj@lxattr[mind,Lind,6]])
+
+      print(rmat)
       xr<<-data.frame(rmat)
       names(xr)<<-c("Boat","Motor","Gear","Take")
       row.names(xr)<<-obj@longnam[Lind]
@@ -215,7 +233,29 @@ options(shiny.maxRequestSize=1000*1024^2)
   }
 
   observeEvent(input$LAttSel,{
-    if(input$LTType=="Size"){
+
+    if(input$LTType=="Region"){
+
+      regs<-(1:length(obj@misc$region_names))[obj@misc$region_names%in%input$Region]
+      print(obj@misc$region_names%in%input$Region)
+      print("---")
+      print(regs)
+
+      if(length(regs)>0){
+
+        newIDs<-list()
+
+        for(i in 1:length(regs)){
+
+          newIDs[[i]]<-obj@longnam[point.in.polygon(obj@lakex,obj@lakey,obj@misc$region_shapes[[regs[i]]][,1], obj@misc$region_shapes[[regs[i]]][,2])==1]
+
+        }
+
+        newIDs<-unlist(newIDs)
+
+      }
+
+    }else if(input$LTType=="Size"){
 
       Ls<-input$LSize
       if(Ls[2]==round(quantile(obj@lakearea,0.98)/100,0)*100)Ls[2]<-Inf
@@ -239,19 +279,19 @@ options(shiny.maxRequestSize=1000*1024^2)
     }else if(input$LTType=="Stock."){
 
       starr<-array(rep(obj@stnam%in%input$Stype,each=obj@nl),c(obj@nl,obj@nst))
-      mind<-match(input$MType,obj@misc$Mnams)
+      mind<-select$Mind
       Sarr<-obj@lxslev[mind,,]>=(input$Slev[1]*1000) & obj@lxslev[mind,,]<=(input$Slev[2]*1000)
       newIDs<-obj@longnam[apply(starr&Sarr,1,sum)>0]
 
     }else if(input$LTType=="Effort"){
 
-      mind<-match(input$MType,obj@misc$Mnams)
+      mind<-select$Mind
       effsum<-apply(obj@eff[mind,1,,,],2,sum)
       newIDs=obj@longnam[effsum>=input$Effort[1] & effsum<=input$Effort[2]]
 
     }else{ #"Manage."
 
-      mind<-match(input$MType,obj@misc$Mnams)
+      mind<-select$Mind
 
       selarr<-cbind(obj@lxattr[mind,,1]%in%input$BoatRes,
                     obj@lxattr[mind,,3]%in%input$MotorRes,
@@ -262,7 +302,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     }
 
-    selled<-input$Lsel
+    selled<-obj@longnam[select$Lind]
     if(input$LMode=="Add"){
       UpdateSel(c(selled,newIDs))
       #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
@@ -270,10 +310,10 @@ options(shiny.maxRequestSize=1000*1024^2)
 
       UpdateSel(selled[!selled%in%newIDs])
       #updateSelectInput(session=session,"Lsel",selected=newselled)
-    }else if(input$LMode=="Intersection"&length(input$Lsel)>0){
+    }else if(input$LMode=="Intersection"&length(selled)>0){
       UpdateSel(selled[selled%in%newIDs])
       #updateSelectInput(session=session,"Lsel",selected=newselled)
-    }else if(input$LMode=="Difference"&length(input$Lsel)>0){
+    }else if(input$LMode=="Difference"&length(selled)>0){
       newselled<-selled[!selled%in%newIDs]
       newIDs<-newIDs[!newIDs%in%selled]
       UpdateSel[c(newselled,newIDs)]
@@ -286,9 +326,9 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   getcosts<-function(){
     sind<-obj@stnam%in%input$stypes
-    lind<-obj@longnam%in%input$Lsel
+    lind<-select$Lind
     if(sum(sind)>0&sum(lind)>0){
-      mind<-match(input$MType,obj@misc$Mnams)
+      mind<-select$Mind
       costarr<-obj@Scosts[1,lind,sind]
       sarr<-obj@lxslev[mind,lind,sind]
       f1<-sum(sarr)/1000
@@ -329,20 +369,27 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$MakeNewMan,{
 
-    tocopy<-match(input$MType,obj@misc$Mnams)
-    obj<<-AddMan(obj,tocopy=tocopy)
-    newnams<-c(obj@misc$Mnams,input$NewMan)
-    updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
-    obj@misc$Mnams<<-newnams
-    updateSelectInput(session,"Del",choices=newnams)
-    UpScen()
+
+    if(!(input$NewMan %in% obj@misc$Mnams)&obj@nmanage<8){
+      tocopy<-select$Mind
+      obj<<-AddMan(obj,tocopy=tocopy)
+      manage$lxslev<-obj@lxslev
+      manage$lxattr<-obj@lxattr
+      select$Mind<-c(rep(F,obj@nmanage-1),T)
+      newnams<-c(obj@misc$Mnams,input$NewMan)
+      updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[select$Mind])
+      obj@misc$Mnams<<-newnams
+      updateSelectInput(session,"Del",choices=newnams)
+      UpScen()
+      UpdateSel(obj@longnam[input$Lind])
+    }
 
   })
 
   observeEvent(input$AppRegs,{
 
-    Lind<-obj@longnam%in%input$Lsel
-    mind<-match(input$MType,obj@misc$Mnams)
+    Lind<-select$Lind
+    mind<-select$Mind
 
     boats<-input$EBoatRes
     print(boats)
@@ -353,23 +400,32 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(gears>0)obj@lxattr[mind,Lind,4]<<-as.numeric(gears)
     take<-input$ETakeLim
     if(take>0)obj@lxattr[mind,Lind,6]<<-as.numeric(take)
-    UpdateSel(input$Lsel)
+
+
+    print(obj@lxattr[mind,Lind,6])
+
+    manage$lxattr<-obj@lxattr
+    UpdateSel(obj@longnam[Lind])
+
 
   })
 
   observeEvent(input$AppStks,{
 
-    Lind<-obj@longnam%in%input$Lsel
-    mind<-match(input$MType,obj@misc$Mnams)
+    Lind<-select$Lind
+    mind<-select$Mind
 
     stsel<-input$stypes
-    print(stsel)
-    if(sum(stsel%in%obj@stnam)>0){
+    tosel<-obj@stnam%in%stsel
 
-      obj@lxslev[mind,Lind,stsel%in%obj@stnam]<-obj@lxslev[mind,Lind,stsel%in%obj@stnam]*input$sfac
+    if(sum(tosel)>0){
+
+      obj@lxslev[mind,Lind,tosel]<<-obj@lxslev[mind,Lind,tosel]*input$sfac
 
     }
-    UpdateSel(input$Lsel)
+
+    manage$lxslev<-obj@lxslev
+    UpdateSel(obj@longnam[Lind])
 
   })
 
@@ -378,8 +434,8 @@ options(shiny.maxRequestSize=1000*1024^2)
     i = info$row
     j = info$col
     v = info$value
-    lind<-match(input$Lsel[i],obj@longnam)
-    mind<-match(input$MType,obj@misc$Mnams)
+    lind<-select$Lind
+    mind<-select$Mind
     obj@lxslev[mind,lind,j]<<-as.numeric(v)
     #print(obj@lxslev[,lind,])
 
@@ -396,8 +452,8 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(j==3)v2<-match(v,GearRes)
     if(j==4)v2<-match(v,TakeLim)
     j2<-c(1,3,4,6)[j]
-    lind<-match(input$Lsel[i],obj@longnam)
-    mind<-match(input$MType,obj@misc$Mnams)
+    lind<-select$Lind
+    mind<-select$Mind
     obj@lxattr[mind,lind,j2]<<-as.numeric(v2)
     #print(obj@lxslev[,lind,])
 
@@ -418,7 +474,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$MType,{
 
-    UpdateSel(input$Lsel)
+    select$Mind=match(input$MType,obj@misc$Mnams)
+    UpdateSel(obj@longnam[select$input])
 
   })
 
@@ -545,6 +602,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   # Fishery
   #output$plotM <- renderPlot(plotM())
+  output$Land_plot <- renderPlot(plotLand())
 
+    #renderPlot(plotMan())
 
 })
