@@ -9,10 +9,6 @@ geterr(n, CV)
 geterr(n, CV)
 }
 \arguments{
-\item{n}{integer, the number of random draws}
-
-\item{CV}{real positive number, the coefficient of variation}
-
 \item{n}{integer: the number of draws}
 
 \item{CV}{numeric: the coefficient of variation}

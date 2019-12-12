@@ -4,8 +4,17 @@
 \alias{calceff}
 \title{The IFD effort calculator}
 \usage{
-calceff(obj, nits = 15, couch = F, startE = F, varind = 0.2,
-  uprat = 0.1, GModel = "New Lester", quiet = F)
+calceff(
+  obj,
+  nits = 15,
+  couch = F,
+  startE = F,
+  varind = 0.2,
+  uprat = 0.1,
+  GModel = "New Lester",
+  quiet = F,
+  shiny = F
+)
 }
 \arguments{
 \item{obj}{an object of class 'Landscape'}
@@ -21,6 +30,8 @@ calceff(obj, nits = 15, couch = F, startE = F, varind = 0.2,
 \item{uprat}{fraction, When converging on a stable effort distribution this is the contributing fraction of new effort}
 
 \item{quiet}{logical, should warnings and messages be surpressed?}
+
+\item{shiny}{logical, should progress bar updates be provided (required for shiny app)}
 
 \item{Gmodel}{character, the density dependent growth model. Options are 'Lester1', 'Lester2' and 'New Lester'}
 }

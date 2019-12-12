@@ -4,8 +4,16 @@
 \alias{opt_apr}
 \title{Optimize for mean effort per license on a population centre by population centre basis}
 \usage{
-opt_apr(par, obj, nits = 15, opt = T, ploty = F, varind = 0.15,
-  uprat = 0.05, log = T)
+opt_apr(
+  par,
+  obj,
+  nits = 15,
+  opt = T,
+  ploty = F,
+  varind = 0.15,
+  uprat = 0.05,
+  log = T
+)
 }
 \arguments{
 \item{par}{A single parameter estimating the relative impact of the accessibility on overall utility}

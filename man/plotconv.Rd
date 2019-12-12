@@ -4,8 +4,7 @@
 \alias{plotconv}
 \title{Plot IFD convergence diagnostics}
 \usage{
-plotconv(obj, tol = 0.1, totE = F, n = 20, ylimy = NA,
-  forpaper = F)
+plotconv(obj, tol = 0.1, totE = F, n = 20, ylimy = NA, forpaper = F)
 }
 \arguments{
 \item{obj}{an object of class 'Landscape'}

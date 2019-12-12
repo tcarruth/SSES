@@ -4,8 +4,17 @@
 \alias{opt_DR_acc}
 \title{Optimize for slope on accessibility values}
 \usage{
-opt_DR_acc(par, obj, nits = 15, opt = T, ploty = F, varind = 0.15,
-  uprat = 0.05, log = T, quiet = T)
+opt_DR_acc(
+  par,
+  obj,
+  nits = 15,
+  opt = T,
+  ploty = F,
+  varind = 0.15,
+  uprat = 0.05,
+  log = T,
+  quiet = T
+)
 }
 \arguments{
 \item{par}{A single parameter estimating the relative impact of the accessibility on overall utility}

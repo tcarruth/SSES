@@ -4,8 +4,19 @@
 \alias{ttp_pos}
 \title{Text positioning for word cloud (just data points)}
 \usage{
-ttp_pos(x, y, words, cex = 1, pcex = 1, pcol = "red", new = TRUE,
-  show.lines = TRUE, lwd = 1, lcol = "black", ...)
+ttp_pos(
+  x,
+  y,
+  words,
+  cex = 1,
+  pcex = 1,
+  pcol = "red",
+  new = TRUE,
+  show.lines = TRUE,
+  lwd = 1,
+  lcol = "black",
+  ...
+)
 }
 \arguments{
 \item{x}{vector x coordinates}

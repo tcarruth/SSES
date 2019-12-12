@@ -4,9 +4,19 @@
 \alias{mapeff}
 \title{Plot a map of landscape effort}
 \usage{
-mapeff(obj, maxps = 2, latlim = NA, lonlim = NA, nman = 1,
-  nsim = 1, dens = F, U = F, lcex = 0.55, pcex = 0.75,
-  lpick = NA)
+mapeff(
+  obj,
+  maxps = 2,
+  latlim = NA,
+  lonlim = NA,
+  nman = 1,
+  nsim = 1,
+  dens = F,
+  U = F,
+  lcex = 0.55,
+  pcex = 0.75,
+  lpick = NA
+)
 }
 \arguments{
 \item{obj}{an object of class 'Landscape'}

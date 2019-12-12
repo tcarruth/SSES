@@ -9,10 +9,6 @@ mconv(m, sd)
 mconv(m, sd)
 }
 \arguments{
-\item{m}{real number, mean value}
-
-\item{sd}{real positive number, sd of the variable}
-
 \item{m}{mean value of transformed variable}
 
 \item{sd}{standard deviation of transformed variable}

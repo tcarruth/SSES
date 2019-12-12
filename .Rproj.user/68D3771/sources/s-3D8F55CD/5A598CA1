@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576186077156.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3150857495",
+    "id" : "5A598CA1",
+    "lastKnownWriteTime" : 1576186308,
+    "last_content_update" : 1576186308763,
+    "path" : "C:/GitHub/SSES/R/calceff.R",
+    "project_path" : "R/calceff.R",
+    "properties" : {
+        "cursorPosition" : "366,15",
+        "scrollLine" : "352"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

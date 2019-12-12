@@ -4,8 +4,15 @@
 \alias{opt_DR_apr}
 \title{Optimize for discard rate and average mean effort multiplier on the landscape object slot apr}
 \usage{
-opt_DR_apr(par, obj, nits = 200, opt = T, ploty = F, varind = 0.15,
-  uprat = 0.05)
+opt_DR_apr(
+  par,
+  obj,
+  nits = 200,
+  opt = T,
+  ploty = F,
+  varind = 0.15,
+  uprat = 0.05
+)
 }
 \arguments{
 \item{par}{A single parameter estimating the relative impact of the accessibility on overall utility}

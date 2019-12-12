@@ -39,13 +39,6 @@ shinyUI(
                       style{ font-size:13px;}
                       .datatables .display {margin-left: 0;}
 
-                      .shiny-notification {
-                      height: 60px;
-                      width: 300px;
-                      position:fixed;
-                      top: calc(50% - 50px);
-                      left: calc(50% - 400px);
-                      }
                       #SessionID{font-size:11px;}
                       #Dependencies{font-size:11px;}
 
@@ -100,7 +93,9 @@ shinyUI(
     fluidRow(
     column(7,
 
-           column(8,h5(paste0(obj@Name,", n lakes = ",obj@nl,", n pop. centres = ",obj@npc))),
+           column(8,textOutput('Name')),
+
+                 # h5(paste0(output.Name,", n lakes = ",obj@nl,", n pop. centres = ",obj@npc))),
            column(2,h5("Management Scenario:")),
            column(2,
                   selectInput("MType",label=NULL,choices=obj@misc$Mnams,selected=obj@misc$Mnams[length(obj@misc$Mnams)])
@@ -136,9 +131,6 @@ shinyUI(
           value=1
        ),
 
-       tabPanel("Outcomes",
-                h5("Performance vizualization options"),value=2
-       ),
 
        tabPanel("Ext. Selection",
                 column(12,h5("Selection Mode:"),style='padding-top:15px'),
@@ -196,12 +188,12 @@ shinyUI(
                           # selectInput("Lsel",label=NULL,choices=obj@longnam,selected="",multiple=TRUE)
                  #   )
                 #)
-                value=3),
+                value=2),
 
 
 
        tabPanel("Regulations",
-
+            conditionalPanel("output.NoSel==0",
                 column(12,style="padding-top:15px; padding-left:0px",
 
                        column(2,style="padding-top:8px",
@@ -223,8 +215,9 @@ shinyUI(
                     #        DTOutput("RegGrpAtt")
                      #),
                      column(4,style="padding-top:0px",
-
+                       conditionalPanel("!(input.EBoatRes==0&input.EMotorRes==0&input.EGearRes==0&input.ETakeLim==0)",
                             actionButton("AppRegs","Apply Changes to Selection",style="color:red")
+                       )
 
                      )
                   )
@@ -237,12 +230,18 @@ shinyUI(
                      )
 
                   )
-                ),
+                )
+            ),
+            conditionalPanel("output.NoSel==1",
+               column(12,
+                      h5("< No lakes selected >",style="color:grey"),
+                      style="padding:25px")
 
-            value=4),
+            ),
+            value=3),
 
       tabPanel("Stocking",
-
+          conditionalPanel("output.NoSel==0",
                column(12,style="padding-top:15px; padding-left:0px",
 
                       column(2,style="padding-top:8px",
@@ -279,23 +278,63 @@ shinyUI(
 
                                        )
                       )
+               )
+          ),
+          conditionalPanel("output.NoSel==1",
+               column(12,
+                      h5("< No lakes selected >",style="color:grey"),
+                      style="padding:25px")
+          ),
+          value=4),
+
+      tabPanel("Outcomes",
+               conditionalPanel("output.Calc==1",
+
+                                h5("Outcomes for selected Lakes",style="color:red"),
+                                plotOutput("Out_plot_S",height=230),
+                                #hr(),
+                                h5("Outcomes for all lakes",style="color:blue"),
+                                plotOutput("Out_plot",height=230)
+
                ),
 
-               value=5),
+               conditionalPanel("output.Calc==0",
+                                column(12,
+                                       h5("< Management scenarios have changed, effort requires recalculation >",style="color:grey"),
+                                       style="padding:25px")
+               ),
+
+               value=5
+      ),
+
 
       tabPanel("Options",
 
-               column(12, h5("File"),style="padding-top:10px"),
+               column(12, h5("File"),style="padding-top:10px;padding-bottom:0px"),
                column(12,
-                      actionButton("Load","Load Landscape"),
-                      actionButton("Save","Save Landscape")
+                  column(6,style="padding-top:10px; padding-bottom:0px",
+                      fileInput("Load","Load  (.SSES)")
+                  ),
+                  column(6,style="padding-bottom:0px",
+                      h5("Save",style="font-weight:bold"),
+                       downloadButton("Save","")
+                  )
+               ),
+               column(12, hr(),style="height=5px"),
+               column(12,h5("Rename landscape")),
+               column(5,
+                      actionButton("Rename","Rename landscape:")
+               ),
+               column(7,
+                      textInput("NewNam",label=NULL,"My Landscape")
+
                ),
                column(12, hr(),style="padding:0px"),
                column(12,h5("Organize Management Scenarios")),
-               column(5,
-                      actionButton("MakeNewMan","Copy current management scenario and name it:")
+               column(6,
+                      actionButton("MakeNewMan","Copy currently selected & name it:")
                ),
-               column(7,
+               column(6,
                       textInput("NewMan",label=NULL,"3: Alternative")
 
                ),
@@ -312,6 +351,9 @@ shinyUI(
 
                column(12, hr()),
                h5("Calculation options"),
+               column(4,sliderInput('nits',"Number of iterations",10,1000,20,step=10)),
+               column(4,sliderInput('varind',"Slope of logit choice",0.05,0.5,0.2,step=0.01)),
+               column(4,sliderInput('uprat',"Effort update fraction",0.01,0.5,0.05,step=0.01)),
                value=6)
 
       )
@@ -322,9 +364,9 @@ shinyUI(
            column(12,hr(),style="padding:0px"),
            column(3),
            column(6,style="padding-top:7px",
-
+                conditionalPanel("output.Calc==0",
                   actionButton("Calc","RE-CALCULATE EFFORT",style='color:green;height:60px;width:400px;border-color:green')
-
+                )
            )
     ),
 

@@ -12,10 +12,6 @@ Stoch(obj, nsim)
 \arguments{
 \item{obj}{an object of class 'Landscape'}
 
-\item{nsim}{integer: the number of simulations (stochastic samples of parameters)}
-
-\item{obj}{an object of class 'Landscape'}
-
 \item{nsim}{integer value, the number of simulated landscapes}
 }
 \description{

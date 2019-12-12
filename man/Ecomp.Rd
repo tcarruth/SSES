@@ -4,9 +4,20 @@
 \alias{Ecomp}
 \title{Effort comparison observed (experimental) vs predicted by the IFD calculation}
 \usage{
-Ecomp(obj, funcy = NA, lcex = 0.7, pcol = NA, pcex = 0.7,
-  log = T, nice = T, lims = NA, forpaper = F, dens = F,
-  plottext = T, Rstat = T)
+Ecomp(
+  obj,
+  funcy = NA,
+  lcex = 0.7,
+  pcol = NA,
+  pcex = 0.7,
+  log = T,
+  nice = T,
+  lims = NA,
+  forpaper = F,
+  dens = F,
+  plottext = T,
+  Rstat = T
+)
 }
 \arguments{
 \item{obj}{an object of class 'Landscape'}

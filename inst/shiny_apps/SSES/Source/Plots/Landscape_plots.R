@@ -29,7 +29,7 @@ plotMan <-function(dummy=1,Sel=F){
     colnames(dat)<-obj@stnam
     cols<-mcols[1:length(obj@misc$Mnams)]
     barplot(dat,beside=TRUE,col=cols,border=NA)
-    legend('topleft',legend=obj@misc$Mnams,text.col=cols,bty='n')
+    legend('topleft',legend=obj@misc$Mnams,text.col=cols,bty='n',cex=1.2,text.font=2)
 
     mout<-list()
 
@@ -61,12 +61,11 @@ plotMan <-function(dummy=1,Sel=F){
       }
 
       barplot(dat,beside=TRUE,col=cols,border=NA)
+
     }
   }
 
 }
-
-
 
 
 histplot<-function(all,selind,qs=c(0.01,0.99),namey=""){
@@ -81,12 +80,52 @@ histplot<-function(all,selind,qs=c(0.01,0.99),namey=""){
   abline(v=c(quantile(suby,c(0.05,0.95)),mean(suby)),col='red',lty=c(2,2,1))
 
   hist(all[selind],breaks=breaks,col="#ff000060",border=NA,add=T,freq=F)
-  legend('topright',legend=namey,bty='n')
+  legend('topright',legend=namey,bty='n',cex=1.2,text.font=2)
 
 }
 
 
+plotOut<-function(Sel=F){
 
+  cols<-mcols[1:length(obj@misc$Mnams)]
+  Lind<-rep(T,obj@nl)
+  if(Sel)Lind<-select$Lind
+
+  if(Sel&sum(Lind)==0&Calc()==1){
+
+    plot(1,1,col='white',axes=F,xlab="",ylab="",main="")
+    legend('center',legend="< No lakes selected >",bty='n',text.col="grey")
+
+  }else{
+
+    multiple<-sum(Lind)>1
+
+    if(!multiple){
+
+
+    }else{
+      yline<-2.1
+      layout(matrix(c(1,4,2,4,3,4),nrow=2))
+      par(mai=c(0.3,0.4,0.05,0.05))
+      Effort<-matrix(apply(obj@eff[,,,Lind,,drop=T],1,sum),nrow=obj@nmanage)
+      barplot(Effort,beside=T,col=cols,border=NA)
+      mtext("Effort (days)",2,line=yline)
+      Cost<-matrix(apply(obj@lxslev[,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=obj@nmanage),c(obj@nmanage,sum(Lind),obj@nst)),1,sum),nrow=obj@nmanage)
+      barplot(Cost,beside=T,col=cols,border=NA)
+      mtext("Stock. cost ($)",2,line=yline)
+      EpC<-Effort/Cost
+      barplot(EpC,beside=T,col=cols,border=NA)
+      mtext("Effort / Cost (day / $)",2,line=yline)
+      EbA<-apply(obj@eff[,,,Lind,,drop=T],c(1,4),sum)
+      colnames(EbA)<-obj@anam
+      barplot(EbA,beside=T,col=cols,border=NA)
+      mtext("Effort by ang. class",2,line=yline)
+    }
+
+  }
+
+
+}
 
 
 

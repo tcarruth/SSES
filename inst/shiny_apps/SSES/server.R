@@ -9,7 +9,7 @@ shinyServer(function(input, output, session) {
 
 options(shiny.maxRequestSize=1000*1024^2)
 
-  Version<<-"1.2.1"
+  Version<<-packageVersion('SSES')
   output$Version<-renderText(paste0("spatial social ecological systems (v", Version, ")"))
   output$Dependencies<-renderText(paste0("Powered by: SSES v", packageVersion('SSES')))
 
@@ -21,10 +21,19 @@ options(shiny.maxRequestSize=1000*1024^2)
   CurrentYr<-as.integer(substr(as.character(Sys.time()),1,4))
   Copyright<-"Open Source, GPL-2"
 
-  obj<<-readRDS(file="./Data/Landscape_test.rda")
-
+  obj<<-readRDS(file="./Data/Landscape.rda")
+  #obj<-reactiveVal(readRDS(file="./Data/Landscape_test.rda"))
   manage<-reactiveValues(lxslev=obj@lxslev, lxattr=obj@lxattr)
   select<-reactiveValues(Lind=NULL,MType=NULL)
+  Misc  <-reactiveValues(Name=obj@Name)
+
+  Calc<-reactiveVal(1) # Has effort been calculated
+  output$Calc   <- reactive({ Calc()})
+  outputOptions(output,"Calc",suspendWhenHidden=FALSE)
+
+  NoSel<-reactiveVal(1) # Has a lake been selected?
+  output$NoSel   <- reactive({ NoSel()})
+  outputOptions(output,"NoSel",suspendWhenHidden=FALSE)
 
   output$Lmap <- renderLeaflet({
     leaflet() %>%
@@ -107,6 +116,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     #saveRDS(newdata,"C:/temp/newdata")
     return(newdata)
+
   })
 
   #Pdat<-reactive({
@@ -134,16 +144,31 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   })
 
+  output$Out_plot_S <- renderPlot({
+    plotOut(Sel=T)
+
+  })
+
+  output$Out_plot <- renderPlot({
+    plotOut()
+
+  })
+
   observeEvent(input$LAll,{
       updateSelectInput(session=session,"Lsel",selected=obj@longnam)
       select$Lind<-rep(T,obj@nl)
+      UpdateSel(obj@longnam)
   })
 
   observeEvent(input$LClear,{
       updateSelectInput(session=session,"Lsel",selected="")
+
       select$Lind<-rep(F,obj@nl)
+      UpdateSel(NULL)
   }
   )
+
+
 
   #observe all changes go controls or tabs
   #observeEvent(sapply(inputtabs, function(x) input[[x]]),{
@@ -218,7 +243,7 @@ options(shiny.maxRequestSize=1000*1024^2)
       #xr2<-
       #output$RegGrpAtt<-renderDTclass(xr2, selection = 'none',escape=FALSE, caption='',
       #                        class = 'display',options = list(dom = 't'))
-
+      NoSel(0)
     }else{
       updateSelectInput(session=session,"Lsel",choices=obj@longnam,selected=NULL)
       nulltab<-data.frame(matrix(rep("-",length(obj@nst)),ncol=obj@nst))
@@ -228,6 +253,7 @@ options(shiny.maxRequestSize=1000*1024^2)
                               class = 'display',options = list(dom = 't'))
       output$GrpAtt<-renderDT(nulltab,selection = 'none',escape=FALSE, caption='',
                               class = 'display',options = list(dom = 't'))
+      NoSel(1)
     }
 
   }
@@ -355,6 +381,12 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   })
 
+  output$Name<-renderText({
+
+    paste0(Misc$Name, ", ",obj@nl," lakes, ",obj@npc, " pop centres")
+
+  })
+
   output$s2f <- renderText({
 
     getcosts()[3]
@@ -367,8 +399,13 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   })
 
-  observeEvent(input$MakeNewMan,{
+  observeEvent(input$Rename,{
+    obj@Name<-input$NewNam
+    Misc$Name<-paste0(input$NewNam)
+   }
+  )
 
+  observeEvent(input$MakeNewMan,{
 
     if(!(input$NewMan %in% obj@misc$Mnams)&obj@nmanage<8){
       tocopy<-select$Mind
@@ -406,7 +443,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     manage$lxattr<-obj@lxattr
     UpdateSel(obj@longnam[Lind])
-
+    Calc(0)
 
   })
 
@@ -426,6 +463,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
     manage$lxslev<-obj@lxslev
     UpdateSel(obj@longnam[Lind])
+    Calc(0)
+
 
   })
 
@@ -438,6 +477,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     mind<-select$Mind
     obj@lxslev[mind,lind,j]<<-as.numeric(v)
     #print(obj@lxslev[,lind,])
+    Calc(0)
 
   })
 
@@ -456,6 +496,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     mind<-select$Mind
     obj@lxattr[mind,lind,j2]<<-as.numeric(v2)
     #print(obj@lxslev[,lind,])
+    Calc(0)
 
   })
 
@@ -505,6 +546,24 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   })
 
+  observeEvent(input$Calc,{
+
+    Calc(0)
+    nits<-input$nits
+    varind<-input$varind
+    uprat<-input$uprat
+
+    withProgress(message = "Solving for IFD of Effort", value = 0, {
+
+      obj<<-calceff(obj,nits=nits,couch=T,startE=T,varind=varind,uprat=uprat,quiet=F,shiny=T)
+
+    })
+
+    Calc(1)
+
+
+  })
+
   #output$markers <- renderPrint({print(dataUpload())})
 
   #observeEvent(input$Mode,{
@@ -515,46 +574,41 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   # == File I/O ==========================================================================
 
-  # Plan save
-  #output$Save_Plan<- downloadHandler(
 
-   # filename = function()paste0(namconv(input$Name),".Plan"),
+  output$Save<- downloadHandler(
 
-    #content=function(file){
+    filename = function()paste0(namconv(obj@Name),".SSES"),
 
-     # doprogress("Saving Evaluation data")
-      #saveRDS(list(MSEobj=MSEobj,MSEobj_reb=MSEobj_reb),file)
+    content=function(file){
 
-    #}
+      saveRDS(obj,file)
 
-  #)
+    }
 
-  # Plan load
-  #observeEvent(input$Load_Plan,{
+  )
 
-   # filey<-input$Load_Plan
 
-    #tryCatch({
-     # listy<<-readRDS(file=filey$datapath)
-      #if (class(listy[[1]]) !='MSE') stop()
-    #},
-    #error = function(e){
-    #  shinyalert("File read error", "This does not appear to be a MERA evaluation object", type = "error")
-    #  return(0)
-    #}
-    #)
+  observeEvent(input$Load,{
 
-    #cond<-class(listy[[1]])=="MSE" & class(listy[[2]])=="MSE" & listy[[1]]@nMPs>1
+    filey<-input$Load
 
-    #if(cond){
-    #  MSEobj<<-listy[[1]]
-    #  MSEobj_reb<<-listy[[2]]
-    #  updateTabsetPanel(session,"Res_Tab",selected="1")
-    #}else{
-    #  shinyalert("File read error", "This does not appear to be a MERA planning object", type = "error")
-    #}
+    tryCatch({
+      temp<<-readRDS(file=filey$datapath)
+      if (class(temp) !='Landscape') stop()
+      obj<<-temp
+      UpScen()
+      UpdateSel(NULL)
+      manage$lxslev<-obj@lxslev
+      manage$lxattr<-obj@lxattr
+      select$Lind<-rep(F,obj@nl)
+    },
+    error = function(e){
+      shinyalert("File read error", "This does not appear to be an SSES Landscape object", type = "error")
+      return(0)
+    }
+    )
 
-  #})
+  })
 
   # End of file I/O ===================================================================================
 

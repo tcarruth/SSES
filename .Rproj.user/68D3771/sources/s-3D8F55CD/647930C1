@@ -1,24 +1,24 @@
 {
     "collab_server" : "",
     "contents" : "",
-    "created" : 1575507243626.000,
+    "created" : 1576186154668.000,
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
     "hash" : "0",
-    "id" : "DE5F6800",
-    "lastKnownWriteTime" : 1574714562,
-    "last_content_update" : 1574714562,
-    "path" : "C:/Users/tcar_/Dropbox/Trout lakes/PrelimLarge/LSM 3 Figures for paper.R",
+    "id" : "647930C1",
+    "lastKnownWriteTime" : 1572557379,
+    "last_content_update" : 1572557379,
+    "path" : "C:/GitHub/MERA/inst/shiny_apps/MERA/server.R",
     "project_path" : null,
     "properties" : {
-        "cursorPosition" : "980,19",
-        "scrollLine" : "960"
+        "cursorPosition" : "765,24",
+        "scrollLine" : "758"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 8,
+    "relative_order" : 10,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "r_source"

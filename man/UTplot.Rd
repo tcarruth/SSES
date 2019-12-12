@@ -4,8 +4,16 @@
 \alias{UTplot}
 \title{Plot a map of landscape effort}
 \usage{
-UTplot(ED, aclassnam, popnams, lonlim, latlim, obj, region_list,
-  cex.axis = 0.8)
+UTplot(
+  ED,
+  aclassnam,
+  popnams,
+  lonlim,
+  latlim,
+  obj,
+  region_list,
+  cex.axis = 0.8
+)
 }
 \arguments{
 \item{ED}{an object of class 'Landscape'}
