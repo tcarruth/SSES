@@ -292,12 +292,24 @@ shinyUI(
 
       tabPanel("Outcomes",
                conditionalPanel("output.Calc==1",
+                    tabsetPanel(id = "Outtab",selected=1,
 
-                                h5("Outcomes for selected Lakes",style="color:red"),
-                                plotOutput("Out_plot_S",height=230),
-                                #hr(),
-                                h5("Outcomes for all lakes",style="color:blue"),
-                                plotOutput("Out_plot",height=230)
+                                tabPanel(h5("All lakes",style = "color:blue"),
+                                         plotOutput("Out_plot",height=550),
+                                         value=1),
+                                tabPanel(h5("Selected lakes",style = "color:red"),
+                                         plotOutput("Out_plot_S",height=550),
+                                         value=2),
+                                tabPanel(h5("Comparisons"),
+                                         column(12,style='padding-top:10px',
+                                         selectInput("MToComp","Reference scenario",choices=obj@misc$Mnams,width=400),
+                                         plotOutput("Out_plot_comp",height=550)),
+                                         value=3),
+                                tabPanel(h5("Convergence"),
+                                         plotOutput("Conv",height=400,width=500),
+                                         value=4)
+                    )
+
 
                ),
 
@@ -354,9 +366,10 @@ shinyUI(
 
                column(12, hr()),
                h5("Calculation options"),
-               column(4,sliderInput('nits',"Number of iterations",10,1000,20,step=10)),
-               column(4,sliderInput('varind',"Slope of logit choice",0.05,0.5,0.2,step=0.01)),
-               column(4,sliderInput('uprat',"Effort update fraction",0.01,0.5,0.05,step=0.01)),
+               column(3,sliderInput('nits',"Number of iterations",10,1000,100,step=10)),
+               column(3,sliderInput('varind',"Slope of logit choice",0.05,0.5,0.2,step=0.01)),
+               column(3,sliderInput('uprat',"Effort update fraction",0.01,0.5,0.05,step=0.01)),
+               column(3,actionButton('Defaults',"Reset to Defaults"),style="padding-top:20px"),
                value=6)
 
       )

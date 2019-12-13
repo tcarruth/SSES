@@ -1,0 +1,1105 @@
+
+Drive<-"C:/Users/Tom/Dropbox"                                              # Set drive
+setwd(paste(Drive,"/Trout lakes/PrelimLarge",sep=""))       # Set working directory
+load(file='Prelim_15_08_16 opt')                        # Load the subsetted data
+source("Source.r")                                      # Load the source code
+library(TeachingDemos)
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+# NOTE that the code for some of hte objects in this script are kept in prelim/LSM 2 optimization ... r
+
+# Figure 1 fishery summary =================================================================================================================================================
+
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 1 Fishery summary.jpg",sep=""),width=9,height=8,units="in",res=600)
+
+
+#lsum<-read.csv(paste(Drive,":/Trout lakes/Data/lic sum.csv",sep=""))
+#names(lsum)<-c("Year","RA","RAS","RAD","R8","R1","Rtot","CA","C8","C1","Ctot","AA","A8","A1","Atot","K2N","K3N","R2N","R3N")
+
+#esum<-read.csv(paste(Drive,":/Trout lakes/Data/effort summary.csv",sep=""))
+
+#m<-cbind(matrix(rep(1,36),nrow=6),matrix(rep(c(2,2,3,3,4,4),4),nrow=6))
+#m[1:2,5:6]<-5
+#graphics.off()
+
+m<-matrix(1,nrow=2,ncol=2)
+m[1,2]<-2
+layout(m,widths=c(1,0.5),heights=c(0.5,1))
+par(mar = c(5, 5, 0.5, 0.2))
+# plot a map of the area ------------- panel a
+
+maxps=2
+lcex=0.55
+pcex=0.9
+
+lonlim<-c(-127,-115)#range(c(obj@lakex,obj@pcx))+c(0.5,-0.5)
+latlim<-c(49,56.5)#range(c(obj@lakey,obj@pcy))+c(-0.5,0.5)
+lcol<-rep("#99999970",obj@nl)
+llcol=rep('#99999970',obj@nl)
+
+topcols<-gray.colors(length(obj@topcols), start = 0, end = 0.7, gamma = 2.2, alpha = NULL)
+topcols[1]<-'black'
+topcols[2:length(topcols)]<-"grey87"#topcols[length(topcols)]
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col='grey94',mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(obj@cont))lines(obj@cont[[i]]$x,obj@cont[[i]]$y,type="l",col=topcols[(obj@cont[[i]]$level/500)+1],lwd=0.75)#lapply(bc@cont,plottop,cols=bc@topcols)
+
+cond<-rep(TRUE,obj@npc)#
+cond1<-!grepl("Rural",obj@pcnam)
+lines(c(-122.7,-112),c(49,49))
+
+la<-obj@lakearea
+la<-la/mean(la)
+cexy<-((0.2+la*(3/max(la)))*maxps)^0.5
+points(obj@lakex,obj@lakey,pch=16,cex=cexy,col='grey55')
+load(file="Johndata_15_08_16")
+lnam<-obj@lakenam
+load(file='Prelim_15_08_16')                           # Load the subsetted data
+cd<-obj@lakenam%in%lnam
+points(obj@lakex[cd],obj@lakey[cd],pch=16,cex=cexy[cd]*2,col='black')
+obj@pcnam[obj@pcnam=="Coquitlam"]<-"Vancouver"
+
+#textplot(obj@lakex,obj@lakey+ladj,obj@longnam,col=lcol,cex=lcex,new=FALSE,show.lines=F,font=2)
+
+activepop<-obj@pcsize[1,cond]
+activepop<-activepop/mean(activepop)
+cexy<-((0.3+activepop*(4/max(activepop)))*maxps)^0.5
+points(obj@pcx[cond1],obj@pcy[cond1],pch=16,cex=cexy,col="white")
+points(obj@pcx[cond1],obj@pcy[cond1],cex=cexy)
+
+col<-rep("black",obj@npc)
+col[c(21,13)]<-NA
+
+ladj<-rep(0,obj@npc)
+ladj[17]<-0.9
+ladj[13]<--0.8
+ladj[2]<-0.3
+ladj[3]<-0.4
+ladj[1]<-0.55
+ladj[11]<-0.2
+ladj[6]<--0.2
+ladj[12]<--1.5
+ladj[1]<-0.5
+
+yadj<-rep(0.2,obj@npc)
+yadj[1]<--0.15
+yadj[19]<--0.12
+yadj[22]<-0.28
+yadj[10]<-0.3
+yadj[14]<-0.1
+
+#text(obj@pcx[!cond1]+ladj[!cond1],obj@pcy[!cond1]+yadj[!cond1],obj@pcnam[!cond1],col=col,cex=pcex,lwd=1,font=1)
+text(obj@pcx[cond1]+ladj[cond1],obj@pcy[cond1]+yadj[cond1],obj@pcnam[cond1],col=col,cex=pcex,lwd=1,font=2)
+
+text(-115.6,48.85,"USA",font=2)
+text(-115.6,49.15,"CANADA",font=2)
+
+rx<-c(-118.5,-115)
+ry<-c(54.4,56.3)
+polygon(c(rx[1],rx[2],rx[2],rx[1]),c(ry[1],ry[1],ry[2],ry[2]),col="white",border=NA)
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=1)
+axis(2,at=y,labels=as.character(y),cex.axis=1)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=3,outer=F,font=2,cex=0.8)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=2.5,outer=F,font=2,cex=0.8)
+
+
+#bgc<-makeTransparent('white',205)
+# license sales area ------------- panel b
+#cola<-gray.colors(3, start = 0.1, end = 0.8, gamma = 2.2, alpha = NULL)
+#dat<-t(as.matrix(lsum[,names(lsum)%in%c("Rtot","Ctot","Atot")]))/1000
+#barplot(dat,beside=F,names.arg=lsum$Year,las=2,col=cola,ylab="License sales (thousand)",border=NA,xlab="Year")
+#legend('bottomleft',legend=c("Foreign","Other Canadians","BC residents"),fill=cola[3:1],box.col=NA,bg=bgc)
+#legend('topright',legend="(b)",bty='n',text.font=2)
+
+
+# stocking rates ------------- panel c
+#colb<-gray.colors(4, start = 0.1, end = 0.8, gamma = 2.2, alpha = NULL)
+#dat<-t(as.matrix(lsum[,names(lsum)%in%c("R2N","R3N","K2N","K3N")]))/1000000
+#dat<-dat[c(3,4,1,2),]
+#barplot(dat,beside=F,names.arg=lsum$Year,col=colb,las=2,border=NA,ylab="Fish stocked (million)",xlab="Year")
+#legend('bottomleft',legend=c("Kokanee 3N","Kokanee 2N","Rainbow 3N","Rainbow 2N"),fill=colb[4:1],box.col=NA,bg=bgc)
+#legend('topright',legend="(c)",bty='n',text.font=2)
+
+
+# effort ------------- panel d
+
+#dat<-t(as.matrix(esum[,names(esum)%in%c("R","C","A")]))/1000
+#barplot(dat,beside=F,names.arg=esum$Year,las=2,col=cola,border=NA,ylab="Angler days (thousand)",xlab="Year")
+#legend('bottomleft',legend=c("Foreign","Other Canadians","BC residents"),fill=cola[3:1],box.col=NA,bg=bgc)
+#legend('topright',legend="(d)",bty='n',text.font=2)
+
+
+# map of world -----------------
+lonlim2<-c(-130,-60)#range(c(obj@lakex,obj@pcx))+c(0.5,-0.5)
+latlim2<-c(30,70)#range(c(obj@lakey,obj@pcy))+c(-0.5,0.5)
+#plot(lonlim2,latlim2,col="NA",axes=F,xlab="",ylab="")
+#polygon(c(lonlim2[1],lonlim2[2],lonlim2[2],lonlim2[1]),c(latlim2[1],latlim2[1],latlim2[2],latlim2[2]),col='white')
+
+map(database = "worldHires", xlim=lonlim2, ylim=latlim2,resolution = 0,fill=T,col='light grey',lwd=1)#make a first plot of the map to define the range of the plot
+polygon(c(lonlim[1],lonlim[2],lonlim[2],lonlim[1]),c(latlim[1],latlim[1],latlim[2],latlim[2]),col=NA,border='white',lwd=2)
+
+text(-100,41,"USA",font=2)
+text(-100,55.1,"CANADA",font=2)
+
+
+dev.off()
+
+
+
+# Figure 2 is the diagram of interdependencies over the landscape scale =============================================================================================
+
+
+
+
+
+# Figure 3 - continuous fitted models ===============================================================================================================================
+
+#aclassnam<-c("Class 1","Class 2","Class 3","Class 4")
+
+
+setwd(paste(Drive,"/Trout lakes/Modelling/LSM/",sep=""))
+axattr<-read.csv(paste(Drive,"/Trout lakes/Data/axattr.csv",sep=""))
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 3 HD models.jpg",sep=""),width=6,height=6,units="in",res=300)
+par(mfrow=c(2,2),mai=c(0.6,0.35,0.2,0.01),omi=c(0.05,0.3,0.01,0.01))
+
+lmt<-new('list')
+cols<-c("black","grey","black","grey")
+#cols<-c("orange","grey","blue","green")
+ltys<-c(1,1,2,2)
+pchy<-c(19,19,1,1)
+liney<-2.2
+cexy<-0.85
+asub<-attributes[attributes$Group.2=="cont",] # attributes comes from 'LSM main new data.R'
+
+wdat<-subset(axattr,axattr$Name==asub$Group.1[1])
+dat<-as.data.frame(cbind(unlist(wdat[,5:8]),rep(fac2num(wdat$Levels),4),rep(1:4,each=nrow(wdat))))
+names(dat)<-c("y","x","a")
+dat$a<-as.factor(dat$a)
+test<-lm(y~x*a,dat=dat)
+pred<-predict(test,newdat=dat)
+plot(NA,xlim=range(dat$x),ylim=range(pred,dat$y),ylab="",xlab="")
+for(a in 1:4){
+  points(dat$x[dat$a==a],dat$y[dat$a==a],col=cols[a],pch=pchy[a])
+  x<-seq(min(dat$x),max(dat$x),length.out=100)
+  nudat<-as.data.frame(cbind(x,rep(a,100)))
+  names(nudat)<-c("x","a")
+  nudat$a<-as.factor(nudat$a)
+  pred<-predict(test,newdat=nudat)
+  lines(x,pred,col=cols[a],lty=ltys[a])
+}
+mtext("Angler crowding (anglers per hectare)",1,line=liney,cex=cexy)
+
+mtext("(a)",3,line=0.2,adj=0.025,cex=0.9)
+
+lmt[[1]]<-test
+
+wdat<-subset(axattr,axattr$Name==asub$Group.1[2])
+wdat<-wdat[c(1,3:7),]
+wdat[1,5:8]<--2
+#plot(dat$x,dat$y,xlim=range(dat$x),ylim=range(pred,dat$y),ylab="",xlab="")
+#lines(newdata$x,pred)
+plot(NA,xlim=range(as.numeric(as.character(wdat$Levels))),ylim=range(wdat[,5:8]),ylab="",xlab="")
+
+for(a in 1:4){
+  dat<-as.data.frame(cbind(wdat[,4+a],fac2num(wdat$Levels),fac2num(wdat$Levels)^2))
+  names(dat)<-c("y","x","x2")
+  dat$x[dat$x==0]<-0.05
+  #test<-nls(y~a*x^b+d*x2+c,start=list(a=-0.5,b=-0.5,c=0,d=1),data=dat)
+  #newdata=data.frame(x=seq(min(dat$x),max(dat$x),length.out=100),x2=seq(min(dat$x),max(dat$x),length.out=100)^2)
+  test<-nls(y~a*x^b+c,start=list(a=-0.5,b=-0.5,c=0),data=dat)
+  newdata=data.frame(x=seq(min(dat$x),max(dat$x),length.out=100))
+  pred<-predict(test,newdata=newdata)
+  points(dat$x,dat$y,col=cols[a],pch=pchy[a])
+  x<-seq(min(dat$x),max(dat$x),length.out=100)
+  lines(x,pred,col=cols[a],lty=ltys[a])
+}
+mtext("Expected catch rate (fish/day)",1,line=liney,cex=cexy)
+mtext("(b)",3,line=0.2,adj=0.025,cex=0.9)
+lmt[[2]]<-test
+
+
+legend('right',legend=aclassnam,text.col=cols,bty='n',col=cols,lty=ltys)
+
+wdat<-subset(axattr,axattr$Name==asub$Group.1[3])
+dat<-as.data.frame(cbind(unlist(wdat[,5:8]),rep(fac2num(wdat$Levels),4),rep(1:4,each=nrow(wdat))))
+names(dat)<-c("y","x","a")
+dat$a<-as.factor(dat$a)
+test<-lm(y~x*a,dat=dat)
+pred<-predict(test,newdat=dat)
+plot(NA,xlim=range(dat$x),ylim=range(pred,dat$y),ylab="",xlab="")
+for(a in 1:4){
+  points(dat$x[dat$a==a],dat$y[dat$a==a],col=cols[a],pch=pchy[a])
+  x<-seq(min(dat$x),max(dat$x),length.out=100)
+  nudat<-as.data.frame(cbind(x,rep(a,100)))
+  names(nudat)<-c("x","a")
+  nudat$a<-as.factor(nudat$a)
+  pred<-predict(test,newdat=nudat)
+  lines(x,pred,col=cols[a],lty=ltys[a])
+}
+mtext("Travel distance (km)",1,line=liney,cex=cexy)
+mtext("(c)",3,line=0.2,adj=0.025,cex=0.9)
+lmt[[3]]<-test
+
+
+wdat<-subset(axattr,axattr$Name==asub$Group.1[4])
+dat<-as.data.frame(cbind(unlist(wdat[,5:8]),rep(fac2num(wdat$Levels),4),rep(1:4,each=nrow(wdat))))
+names(dat)<-c("y","x","a")
+dat$a<-as.factor(dat$a)
+test<-lm(y~x*a,dat=dat)
+pred<-predict(test,newdat=dat)
+plot(NA,xlim=range(dat$x)*2.5,ylim=range(pred,dat$y),ylab="",xlab="")
+for(a in 1:4){
+  points(dat$x[dat$a==a]*2.5,dat$y[dat$a==a],col=cols[a],pch=pchy[a])
+  x<-seq(min(dat$x),max(dat$x),length.out=100)
+  nudat<-as.data.frame(cbind(x,rep(a,100)))
+  names(nudat)<-c("x","a")
+  nudat$a<-as.factor(nudat$a)
+  pred<-predict(test,newdat=nudat)
+  lines(x*2.5,pred,col=cols[a],lty=ltys[a])
+}
+mtext("(d)",3,line=0.2,adj=0.025,cex=0.9)
+lmt[[4]]<-test
+mtext("Expected size of fish caught (cm)",1,line=liney,cex=cexy)
+mtext("Utility",2,line=0.6,outer=T,cex=cexy)
+
+dev.off()
+
+
+# Figure 4 ========================================================================================================================================================================
+
+setwd(paste(Drive,":/Trout lakes/Modelling/LSM/",sep=""))
+axattr<-read.csv(paste(Drive,":/Trout lakes/Data/axattr.csv",sep=""))
+
+jpeg(paste(Drive,":/Trout lakes/Images/Fig 4 HD cat effects.jpg",sep=""),width=6.5,height=7,units="in",res=300)
+#x11()
+par(mfrow=c(6,5),mai=c(0.01,0.2,0.4,0.01),omi=c(0.05,0.32,0.2,0.01))
+cols<-c('white','light grey','black','dark grey')
+line0<-0.5
+
+
+wdat<-subset(axattr,axattr$Name=="species")
+barplot(wdat[,5],col=cols,ylim=range(wdat[,5:8]))
+mtext(aclassnam[1],3,outer=F,line=2.4,cex=1.05)
+mtext("Primary species",3,outer=F,line=line0,adj=0.2,cex=0.85)
+for(a in 2:4) {
+  barplot(wdat[,4+a],col=cols,ylim=range(wdat[,5:8]),col.axis="white")
+  mtext(aclassnam[a],3,outer=F,line=2.4,cex=1.05)
+}
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("rainbow","kokanee"),fill=cols,bty='n')
+
+wdat<-subset(axattr,axattr$Name=="restrictions")
+ylimy<-range(wdat[,5:8])
+if(ylimy[2]<0)ylimy[2]=0
+if(ylimy[1]>0)ylimy[1]=0
+barplot(wdat[,5],col=cols,ylim=ylimy)
+mtext("Gear restrictions",3,outer=F,line=line0,adj=0.2,cex=0.85)
+for(a in 2:4)barplot(wdat[,4+a],col=cols,ylim=ylimy,col.axis="white")
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("none","bait ban", "barbless hooks","fly fish. only"),fill=cols,bty='n')
+
+wdat<-subset(axattr,axattr$Name=="take")
+ylimy<-range(wdat[,5:8])
+if(ylimy[2]<0)ylimy[2]=0
+if(ylimy[1]>0)ylimy[1]=0
+barplot(wdat[,5],col=cols,ylim=ylimy)
+mtext("Take limit",3,outer=F,line=line0,adj=0.15,cex=0.85)
+for(a in 2:4)barplot(wdat[,4+a],col=cols,ylim=ylimy,col.axis="white")
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("no take","1 fish", "4 fish","5+ fish"),fill=cols,bty='n')
+
+wdat<-subset(axattr,axattr$Name=="lake size")
+ylimy<-range(wdat[,5:8])
+if(ylimy[2]<0)ylimy[2]=0
+if(ylimy[1]>0)ylimy[1]=0
+barplot(wdat[,5],col=cols,ylim=ylimy)
+mtext("Lake size",3,outer=F,line=line0,adj=0.15,cex=0.85)
+for(a in 2:4)barplot(wdat[,4+a],col=cols,ylim=ylimy,col.axis="white")
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("<50ha",">50ha"),fill=cols,bty='n')
+
+wdat<-subset(axattr,axattr$Name=="motor")
+ylimy<-range(wdat[,5:8])
+if(ylimy[2]<0)ylimy[2]=0
+if(ylimy[1]>0)ylimy[1]=0
+barplot(wdat[,5],col=cols,ylim=ylimy)
+mtext("Motor restrictions",3,outer=F,line=line0,adj=0.2,cex=0.85)
+for(a in 2:4)barplot(wdat[,4+a],col=cols,ylim=ylimy,col.axis="white")
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("any","less than 10hp","electric only"),fill=cols,bty='n')
+
+wdat<-subset(axattr,axattr$Name=="boat")
+ylimy<-range(wdat[,5:8])
+if(ylimy[2]<0)ylimy[2]=0
+if(ylimy[1]>0)ylimy[1]=0
+barplot(wdat[,5],col=cols,ylim=ylimy)
+mtext("Boat restrictions",3,outer=F,line=line0,adj=0.2,cex=0.85)
+for(a in 2:4)barplot(wdat[,4+a],col=cols,ylim=ylimy,col.axis="white")
+plot(1:2,col='white',axes=F,xlab="",ylab="")
+#legend('left',legend=as.character(wdat$Levels),fill=cols,bty='n')
+legend('left',legend=c("no boats","car top","trailer"),fill=cols,bty='n')
+
+mtext("Utility",2,outer=T,line=0.8)
+
+dev.off()
+
+
+# Figure 5 convergence to the IFD ==========================================================================================================================================================
+
+jpeg(paste(Drive,":/Trout lakes/Images/Fig 5 IFD.jpg",sep=""),width=3.5,height=6,units="in",res=600)
+
+load(file='Prelim_15_08_16 opt')                             # Load a recent full landscape model
+
+#load(file='Prelim_2_10_15')                             # Load a recent full landscape model
+load(file="Johndata_2_10_15")                           # Load the subsetted data
+
+#obj@sel<-array(c(0,0.2,rep(1,obj@nage-2)),dim=c(1,obj@nage))
+labs<-c("(a)","(b)","(c)","(d)")
+conv<-new('list')
+upraty<-c(0.01,0.05,0.1,0.2)
+#graphics.off()
+par(mfrow=c(length(upraty),1),mai=c(0.1,0.1,0.01,0.01),omi=c(0.5,0.5,0.05,0.05))
+vv<-c(49,44,25,NA)
+for(i in 1:length(upraty)){
+  set.seed(1)
+  uprat<-upraty[i]
+  varind<-1   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+  nits<-50      # The number of iterations for the numerical convergence to the approximate IFD
+  obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+  conv[[i]]<-obj@conv
+  plotconv(obj,tol=2,totE=T,ylimy=c(-2,2),n=20,forpaper=T)                              # Did it converge (total effort on a lake)?
+  abline(v=vv[i],col="#99999990",lwd=2)
+  axis(2,c(-2,-1,0,1,2),c(-2,-1,0,1,2),cex.axis=1.2)
+  axis(1,c(0,10,20,30,40,50),rep(NA,6),cex.axis=1.2)
+  texty<-bquote(bold(theta[] ==.(upraty[i])))
+  legend('topright',legend=labs[i], bty='n',cex=1.4)
+  legend('top',legend=texty,bty='n',cex=1.4)
+
+}
+
+axis(1,c(0,10,20,30,40,50),c(0,10,20,30,40,50),cex.axis=1.2)
+mtext("Iteration",1,outer=T,line=2)
+mtext("Log angling effort (days per year)",2,outer=T,line=2)
+
+dev.off()
+
+
+
+# Figure 6 Fit to observed effort ================================================================================================================================================
+
+load(file='Prelim_15_08_16 opt')                             # Load a recent full landscape model
+uprat<-0.05   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+varind<-0.4
+nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+obj@sel<-matrix(c(0,0,1,1,1,1),nrow=1)
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+obj2<-obj
+
+load(file="Johndata_15_08_16 fit")
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+
+
+obj2<-Lsub(obj2,ind<-(1:obj2@nl)[!(obj2@longnam%in%obj@longnam)])
+
+
+jpeg(paste(Drive,":/Trout lakes/Images/Fig 6 effort fit.jpg",sep=""),width=8,height=8,units="in",res=600)
+
+#uprat<-0.1   # When converging on a stable effort distribution is the contributing fraction of new effort
+#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+#nits<-200      # The number of iterations for the numerical convergence to the approximate IFD
+
+#obj@sel<-matrix(c(0,0,1,1,1,1),nrow=1)
+#obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat) # Run the LSM to convergence on the IFD
+
+lcol<-makeTransparent('grey',180)
+jcol<-makeTransparent('black',170)
+
+par(mfrow=c(2,2),mai=c(0.9,0.9,0.01,0.01),omi=rep(0.02,4))    # Set up a plot
+
+x<-log(obj@exeff[1,]+tiny)
+y<-log(apply(obj@eff[1,1,,,],2,sum)+tiny)
+dif<-(y-x)
+
+someflags<-(1:length(x))[x==max(x)|dif==max(dif)|dif==min(dif)]
+nams<-obj@longnam[someflags]
+
+Ecomp(obj2,nice=F,plottext=F,log=F,forpaper=T,Rstat=F,pcol=lcol,lims=c(0,22000))                                            # How does the effort match up (log-log plot)?
+Ecomp_add(obj,nice=F,plottext=F,log=F,forpaper=T,Rstat=T,pcol=jcol,extraR2=bquote(bold(R^2 == 0.698)))
+legend('topleft',legend="(a)",bty='n',text.font=2)
+
+Ecomp(obj2,nice=F,plottext=F,log=T,forpaper=T,Rstat=F,pcol=lcol,lims=c(2.8,10.5))                                            # How does the effort match up (log-log plot)?
+Ecomp_add(obj,nice=F,plottext=F,log=T,forpaper=T,Rstat=T,pcol=jcol,extraR2=bquote(bold(R^2 == 0.977)))
+xs<-x[someflags]
+ys<-y[someflags]
+text(xs+0.05,ys+0.29,nams,font=2,cex=0.8)
+legend('topleft',legend="(b)",bty='n',text.font=2)
+
+Ecomp(obj2,nice=F,plottext=F,log=F,forpaper=T,dens=T,Rstat=F,pcol=lcol,lims=c(0,140))                                            # How does the effort match up (log-log plot)?
+Ecomp_add(obj,nice=F,plottext=F,log=F,forpaper=T,dens=T,Rstat=T,pcol=jcol,extraR2=bquote(bold(R^2 == 0.467)))
+legend('topleft',legend="(c)",bty='n',text.font=2)
+
+CRcomp(obj,log=F,pcol=jcol,forpaper=T,plottext=F)                                     # How does catch rate match up?
+legend('topleft',legend="(d)",bty='n',text.font=2)
+
+dev.off()
+
+
+
+# Figure 7 effort redistribution =============================================================================================================================================
+
+library(shape)
+
+load(file="Eredist_before") #obj1
+load(file="Eredist_Kestrel")  #obj2
+load(file="Eredist_Roche")  #obj3
+load(file="Eredist_Sheridan") #obj4
+
+lakenos<-match(c("KESTREL","ROCHE","SHERIDAN"),obj@longnam)
+
+jpeg(paste(Drive,":/Trout lakes/Images/Fig 7 effort redist.jpg",sep=""),width=8,height=8,units="in",res=600)
+
+ERedist2(obj1,obj2,obj3,obj4,lakenos=lakenos,box=1)
+
+dev.off()
+
+
+
+# Figure 8 expected ecological variables  ====================================================================================================================================
+
+require(SDMTools)
+require(sp)
+
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_list"))
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_names"))
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_centroid"))
+
+region_centroid[8,]<-c(-122,56.5) # move Peace centroid for graphing purposes
+region_centroid[7,1]<-(-118.8)
+
+nreg<-length(region_list)
+
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))
+
+lake_region<-rep(NA,obj@nl)
+
+for(r in 1:length(region_list)){
+
+  out<-pnt.in.poly(cbind(obj@lakex,obj@lakey),region_list[[r]])
+
+  lake_region[out$pip==1]<-r
+
+}
+
+
+
+lonlim=range(region_centroid[,1])+c(-1,1)
+latlim=range(region_centroid[,2])+c(-1.5,0.5)
+
+acol<-c("white","light grey","dark grey","black")
+if(colprint)acol<-c("grey","orange","green","blue")
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 8 ecological impacts.jpg",sep=""),width=11,height=6.5,units="in",res=600)
+
+colprint<-F
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+#par(mai=c(0.1,0.1,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+
+cond<-1:obj@npc
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.7,-112),c(49,49),col="white",lwd=1.2)
+
+availE<-obj@FTroutAng*obj@pcxa[1,,]*obj@pcsize[1,]# post filtering . pop nos/2
+UT<-(apply(obj@eff[1,1,,,],c(1,3),sum)/availE)
+UT[is.na(UT)]<-0
+maxps<-4
+UbyL1<-apply(obj@eff[1,1,,,],2,sum)^0.5
+UbyL<-UbyL1/max(UbyL1)
+cexy<-0.1+UbyL*maxps
+
+points(obj@lakex,obj@lakey,pch=19,cex=cexy,col=makeTransparent("grey25",90))
+
+x<-(-200:200)
+y<-(-200:200)
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=as.character(y),cex.axis=0.8)
+
+legeff<-seq(0,12000,length.out=4)[2:4]
+legcex<-0.1+legeff/max(legeff)*maxps
+
+legend('topright',legend=legeff,pch=19,col=makeTransparent("grey25",90),title="Effort (days)",pt.cex=legcex)
+mtext("(a)",side=3,line=-1,adj=0.02,cex=0.9)
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey90",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:nreg)polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+
+
+lines(c(-122.7,-112),c(49,49),col="white",lwd=1.2)
+
+
+sz<-2.5
+set.seed(1)
+out<-ttp_pos(region_centroid[,1],region_centroid[,2],rep("HH",8),cex=6,lcol=NA,lwd=1.5)
+
+xlims<-cbind(out[,1]-sz/2,out[,1]+sz/2)#cbind(obj@pcx,obj@pcx+1)
+ylims<-cbind(out[,2]-sz/6,out[,2]+sz/6)#cbind(obj@pcy,obj@pcy+1)
+
+#ylimy<-c(0,max(UT))
+locs<-pretty(seq(ylimy[1],ylimy[2]*1.1,length.out=3))
+locs<-c(0,200,400,600)
+
+legend('topright',legend=c("Catch rate (fish/hour)","Length of fish (mm)"),cex=0.75, text.col=c('black','dark grey'),border='white')
+xlim1<-c(0,0.6)
+breaks1<-seq(xlim1[1],xlim1[2],length.out=20)
+
+sigeff<-apply(obj@eff[1,1,,,],2:3,sum)
+
+
+xx<-seq(xlim1[1],xlim1[2],length.out=4)
+for(i in 1:nrow(xlims)){
+  subplot({
+    cond<-(1:obj@nl)[lake_region==i]
+    cr<-NULL
+    sz<-NULL
+    for(l in cond){
+      for(a in 1:obj@na){
+        cr<-c(cr,trlnorm(ceiling(sigeff[l,a]),obj@cr[1,1,l,a],1))
+        sz<-c(sz,trlnorm(ceiling(sigeff[l,a]),obj@avs[1,1,l],0.1))#rep(as.vector(obj@avs[1,1,l]),ceiling(sum(obj@eff[1,1,,l,]))))
+      }
+    }
+
+    cr<-cr[cr<xlim1[2]] # Upper limit on plotted CR
+
+    hist(cr,col='black',breaks=breaks1,axes=F,xlim=xlim1,ylab="",xlab="",main="")
+    axis(1,xx,xx,cex.axis=0.6,font.axis=2,padj=-3.5,tck=-0.03)
+
+    sz<-(sz-200)/300*0.6 # rescale so it can be plotted over CR
+    sz<-sz[sz>xlim1[1]]
+    sz<-sz[sz<xlim1[2]] # upper limit on plotted sz
+
+    hist(sz, col=rgb(0.5,0.5,0.5,0.7),breaks=breaks1,add=T,lty=0)
+    axis(1,xx,(2:5)*100,font.axis=2,col.axis='dark grey',cex.axis=0.6,padj=-2,tck=-0.03)
+    abline(v=mean(cr),lty=3,lwd=1.5)
+    abline(v=mean(sz),lty=3,col=rgb(0.5,0.5,0.5,0.75),lwd=1.5)
+
+    #axis(2,locs,locs,cex.axis=0.7)
+    #abline(h=1,col='#50505060')
+    #abline(v=0.5,col='#50505060')
+    #legend(poslab,Regions[i],bty="n")
+    mtext(region_names$REG_NAME[i],3,line=-0.1,cex=0.75,adj=0.1)
+    legend('topright',legend=c(round(mean(cr),2),ceiling(200+(mean(sz)/0.6)*300)),text.col=c('black',rgb(0.5,0.5,0.5,0.75)),bty='n',cex=0.6)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+
+}
+
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=NA,cex.axis=0.8)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=2.2,outer=T,font=2,cex=1)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=1.5,outer=T,font=2,cex=1)
+
+mtext("(b)",side=3,line=-1,adj=0.02,cex=0.9)
+
+dev.off()
+
+
+
+
+# Figure 9 social impacts ====================================================================================================================================================
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_list"))
+
+if (!require('TeachingDemos'))    install.packages('TeachingDemos',repos='http://cran.stat.sfu.ca')
+library(TeachingDemos)
+
+source("Source.r")
+alpha<-180
+
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))
+#obj@pcxl<-obj@pcxl# post filtering . pop nos*1.1
+uprat<-0.025   # When converging on a stable effort distribution is the contributing fraction of new effort#varind<-0.8   # The slope of the logit choice (low values are 'choosey' a value of 1 is proportional to utility)
+varind<-0.05
+nits<-250
+Ecomp(obj,lims=c(3,10))
+
+obj<-calceff(obj,nits=nits,varind=varind,uprat=uprat,couch=T) # Run the LSM to convergence on the IFD
+plotconv(obj)
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 9 Angler equity.jpg",sep=""),width=11,height=6.5,units="in",res=600)
+
+par(mfrow=c(1,2),mai=c(0.1,0.2,0.1,0.01),omi=c(0.8,0.6,0.1,0.1))                                     # Set up a plot
+
+
+cond<-1:obj@npc
+lonlim=range(obj@pcx[cond])+c(-1.5,1.5)
+latlim=range(obj@pcy[cond])+c(-2,1.5)
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.9,-112),c(48.95,48.95),col="white",lwd=2)
+
+availE<-obj@FTroutAng*obj@pcxa[1,,]*obj@pcsize[1,]# post filtering . pop nos/2
+#UT<-(apply(obj@eff[1,1,,,],c(1,3),sum)/availE)
+#UT[is.na(UT)]<-0
+UT<-array(0,c(obj@npc,obj@na))
+for(pp in 1:obj@npc){
+  for(aa in 1:obj@na){
+    ordy<-order(obj@U[1,1,pp,,aa],decreasing=T)
+    UT[pp,aa]<-log(mean(obj@U[1,1,pp,ordy[1:20],aa]))
+  }
+}
+#Uplot(UT,obj)
+#UT<-apply(obj@U[1,1,,,],c(1,3),sum)
+#UT<-UT/apply(UT,1,max)
+
+maxps<-4
+Ebypc<-apply(obj@eff[1,1,,,],c(1,3),sum)/1000
+
+
+ylimy<-c(0,max(Ebypc))
+locs<-pretty(seq(ylimy[1],ylimy[2]*1.1,length.out=5))
+#locs<-c(0,2,4)
+acol<-c("white","light grey","dark grey","black")
+#if(colprint)acol<-c("grey","orange","green","blue")
+popnams<-obj@pcnam
+for(i in 1:length(popnams)){
+
+  if(class(strsplit(popnams[i],"_"))=='list')popnams[i]<-strsplit(popnams[i],"_")[[1]][1]
+
+}
+
+
+oldnam<-c("PrinceGeorge","FortStJohn","Region5Rural","Region6Rural","Region7ORural")
+newnam<-c("Prince George","Fort St John","Cariboo Rural","Skeena Rural","Omineca Rural")
+popnams[match(oldnam,popnams)]<-newnam
+
+set.seed(2)
+sz<-2.2
+out<-ttp_pos(obj@pcx[cond],obj@pcy[cond],rep("HH",length(cond)),cex=5.5,lwd=2.5,lcol="dark grey")
+
+xlims<-cbind(out[,1]-sz/1.8,out[,1]+sz/1.8)#cbind(obj@pcx,obj@pcx+1)
+ylims<-cbind(out[,2]-sz/3.5,out[,2]+sz/3.5)#cbind(obj@pcy,obj@pcy+1)
+
+
+for(i in 1:nrow(xlims)){
+  subplot({
+    border<-rep('black',4)
+    border[Ebypc[i,]==0]<-'NA'
+    barplot(Ebypc[i,],axes=F,ylim=ylimy,col=acol,xlab="",ylab="",main="",border=border)
+    #if(max(UT[i,])>(0.6*ylimy[2])){
+    #  text(2.5,max(UT[i,])/2+10,obj@pcnam[cond][i],cex=0.75)
+    #}else{
+    #  text(2.5,max(UT[i,])+10,obj@pcnam[cond][i],cex=0.75)
+    #}
+    axis(2,locs,locs,cex.axis=0.7,padj=1)
+    #abline(h=1,col='#50505060')
+    #abline(v=0.5,col='#50505060')
+    mtext(popnams[i],3,line=-0.1,cex=0.7,adj=0.1)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+}
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=as.character(y),cex.axis=0.8)
+
+#mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=2.5,outer=F,font=2,cex=1)
+mtext("(a)",side=3,line=-1,adj=0.02,cex=0.85)
+
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+lines(c(-122.9,-112),c(48.95,48.95),col="white",lwd=2)
+
+
+ylimy<-c(0,max(UT))
+locs<-pretty(seq(ylimy[1],ylimy[2]*1.1,length.out=5))
+#locs<-c(0,2,4)
+acol<-c("white","light grey","dark grey","black")
+#if(colprint)acol<-c("grey","orange","green","blue")
+legend('topright',legend=aclassnam,fill=acol,title='Angler class',cex=0.85)
+
+
+for(i in 1:nrow(xlims)){
+  subplot({
+    border<-rep('black',4)
+    border[UT[i,]==0]<-'NA'
+    barplot(UT[i,],axes=F,ylim=ylimy,col=acol,xlab="",ylab="",main="",border=border)
+    #if(max(UT[i,])>(0.6*ylimy[2])){
+    #  text(2.5,max(UT[i,])/2+10,obj@pcnam[cond][i],cex=0.75)
+    #}else{
+    #  text(2.5,max(UT[i,])+10,obj@pcnam[cond][i],cex=0.75)
+    #}
+    axis(2,locs,locs,cex.axis=0.7,padj=1)
+    #abline(h=1,col='#50505060')
+    #abline(v=0.5,col='#50505060')
+    mtext(popnams[i],3,line=-0.1,cex=0.7,adj=0.1)
+
+  },xlims[i,],ylims[i,],pars=list(bg='white'))
+}
+
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+
+axis(2,at=y,labels=NA,cex.axis=0.8)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=2,outer=T,font=2,cex=1)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=1.5,outer=T,font=2,cex=1)
+
+mtext("(b)",side=3,line=-1,adj=0.02,cex=0.85)
+
+
+dev.off()
+
+
+
+
+
+
+# Figure 10 The landscape benefit of increased stocking lake-by-lake ===================================================================================================================
+
+load(paste0(Drive,":/Trout lakes/Data/BC regions/region_list"))
+load(file="Prelim_15_08_16 opt CB 0")
+ref<-obj@CB
+laketots<-NULL
+
+for(i in 1:10){
+  load(file=paste("Prelim_15_08_16 opt CB",i))
+  laketots<-c(laketots,apply(objmulti@CB,1,sum))
+}
+
+laketots<-(laketots-ref)/ref*100
+
+lonlim=range(obj@pcx)+c(1.5,0.5)
+latlim=range(obj@pcy)+c(-0.1,0)
+
+
+
+jpeg(paste(Drive,":/Trout lakes/Images/Fig 10 regional Cost Benefit.jpg",sep=""),width=6,height=6,units="in",res=600)
+
+par(mai=c(0.8,0.8,0.05,0.05),omi=rep(0,4))
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border='white')
+
+lines(c(-122.9,-112),c(49,49),col="white",lwd=3)
+
+cols<-rep(rgb(0,0,0,0.3),obj@nl)
+cols[laketots<0]<-"#ffffff90"
+
+maxps<-3
+
+cexy<-(maxps*laketots/max(range(laketots)^2)^0.5)^2
+cexy<-cexy^0.5
+
+points(obj@lakex,obj@lakey,cex=cexy,col=cols,pch=19)
+points(obj@lakex[laketots<0],obj@lakey[laketots<0],cex=cexy[laketots<0],col=rgb(0,0,0,0.3))
+
+x<-(-50:-200)
+y<-(30:80)
+
+axis(1,at=x,labels=as.character(x),cex.axis=0.8)
+axis(2,at=y,labels=as.character(y),cex.axis=0.8)
+
+mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=2.5,outer=F,font=2,cex=1)
+mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=2.5,outer=F,font=2,cex=1)
+
+leg<-pretty(seq(min(laketots),max(laketots),length.out=4))
+leg<-leg[leg!=0]
+leg<-leg[order(leg,decreasing=T)]
+lcex<-(maxps*leg/max(range(laketots)^2)^0.5)^2
+lcex<-lcex^0.5
+lcol<-rep(rgb(0,0,0,0.3),length(leg))
+lcol[leg<0]<-"#ffffff90"
+
+legend('topright',legend=leg,pt.cex=lcex,col=lcol,pch=19,title="% change in effort/$ ",bty='n')
+legend('topright',legend=leg,pt.cex=lcex,col=lcol[1],pch=1,title="% change in effort/$ ",bty='n')
+
+
+dev.off()
+
+
+
+
+
+
+# == Figure  11 ===================================================================================================================================================================
+
+
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_list"))
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 11 Stocking 100km.jpg",sep=""),width=4.5,height=12,units="in",res=600)
+par(mfrow=c(3,1),mai=c(0.1,0.02,0.1,0.02),omi=c(0.02,0.02,0.02,0.02))
+
+
+# panel (a) Plot the lakes within / outside of 100km --------------------------------------------------
+
+load(file=paste(getwd(),'/Prelim_15_08_16',sep=""))                             # Load a recent full landscape model with all population centres (24) to identify local lakes
+load("cond100")
+notrural<-grep("Rural",obj@pcnam,invert=T)
+rural<-grep("Rural",obj@pcnam)
+
+
+lonlim=range(obj@pcx)+c(-0.5,0.5)
+latlim=range(obj@pcy)+c(-1.5,0.5)
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey85",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border=rgb(1,1,1,0.5))
+
+lines(c(-122.9,-112),c(49,49),col="white",lwd=3)
+
+lcex=1
+points(obj@lakex[!cond],obj@lakey[!cond],pch=19,cex=lcex+0.2,col="white")
+points(obj@lakex[cond],obj@lakey[cond],pch=19,cex=lcex,col="grey50")
+points(obj@pcx[notrural],obj@pcy[notrural],cex=1.5,col='black',lwd=2.5,pch=3)
+
+
+tcex<-0.85
+mtext("(a)",3,line=-1.5,adj=0.02,cex=tcex)
+
+legend('topright',legend=c("Lake closer than 100km","Lake further than 100km","Urban centre"),pch=c(19,1,3),col=c('grey50','grey85','black'),border=c('grey50','white','black'))
+
+
+# panel (b) Regional effort change among angler classes within 100km stocking --------------------------
+
+set.seed(1)
+
+if (!require('TeachingDemos'))    install.packages('TeachingDemos',repos='http://cran.stat.sfu.ca')
+library(TeachingDemos)
+
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+# --- Tidy up population naming ----
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model with all population centres (24) to identify local lakes
+popnams<-obj@pcnam
+for(i in 1:length(popnams)){
+
+  if(class(strsplit(popnams[i],"_"))=='list')popnams[i]<-strsplit(popnams[i],"_")[[1]][1]
+
+}
+oldnam<-c("PrinceGeorge","FortStJohn","Region5Rural","Region6Rural","Region7ORural")
+newnam<-c("Prince George","Fort St John","Cariboo Rural","Skeena Rural","Omineca Rural")
+popnams[match(oldnam,popnams)]<-newnam
+# ---
+
+
+
+load(file="Comp100k1")
+obj1<-obj
+load(file="Comp100k2")
+obj2<-obj
+
+
+E1<-apply(obj1@eff[1,1,,,],c(1,3),sum)
+E2<-apply(obj2@eff[1,1,,,],c(1,3),sum)
+E1[E1==0]<-1
+E2[E2==0]<-1
+
+ED<-(E2/E1-1)*100
+
+UTplot(ED,aclassnam,popnams,lonlim,latlim,obj,region_list,cex.axis=0.6)
+
+mtext("(b)",3,line=-1.5,adj=0.02,cex=tcex)
+
+legend('topright',legend=aclassnam,fill=acol,title='Angler class')
+
+
+# panel (c) effect change 100km more ---------------------
+
+load(file="CompB100k1")
+objB1<-obj
+load(file="CompB100k2")
+objB2<-obj
+
+EB1<-apply(objB1@eff[1,1,,,],c(1,3),sum)
+EB2<-apply(objB2@eff[1,1,,,],c(1,3),sum)
+EB1[EB1==0]<-1
+EB2[EB2==0]<-1
+
+EDB<-(EB2/EB1-1)*100
+
+UTplot(EDB,aclassnam,popnams,lonlim,latlim,obj,region_list,cex.axis=0.6)
+
+mtext("(c)",3,line=-1.5,adj=0.02,cex=tcex)
+
+
+#mtext(expression(paste("Longitude ",~degree~W,sep="")),side=1,line=3,outer=F,font=2,cex=1)
+#mtext(expression(paste("Latitude ",~degree~N,sep="")),side=2,line=2.5,outer=F,font=2,cex=1)
+
+dev.off()
+
+
+
+# Figure 12 trophy stocking response ============================================================================================
+
+
+load(paste0(Drive,"/Trout lakes/Data/BC regions/region_list"))
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model with all population centres (24) to identify local lakes
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig 12 Response to trophy.jpg",sep=""),width=9,height=4.8,units="in",res=600)
+par(mfrow=c(1,2),mai=c(0.05,0.1,0.1,0.02),omi=c(0.02,0.02,0.02,0.02))
+
+# panel (a) Plot the lakes within / outside of 100km --------------------------------------------------
+
+load("toBtrophy")
+nTrophy<-!toBtrophy
+alreadyTrophy<-nTrophy&obj@BagLim[1,]<5
+
+lonlim=range(obj@pcx)+c(-1,0.5)
+latlim=range(obj@pcy)+c(-1.5,1)
+
+plot(lonlim,latlim,col="white",axes=F,xlab="",ylab="")
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=T,col="grey82",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+map(database = "worldHires", xlim=lonlim, ylim=latlim,resolution = 0,fill=F,col="grey82",mar=rep(0.3,4),add=T,lwd=1)#make a first plot of the map to define the range of the plot
+for(i in 1:length(region_list))polygon(region_list[[i]][,1],region_list[[i]][,2],border=rgb(1,1,1,0.5))
+
+lines(c(-122.9,-112),c(49,49),col="white",lwd=3)
+
+lcex=0.8
+points(obj@lakex,obj@lakey,pch=19,cex=lcex,col="white")
+points(obj@lakex[alreadyTrophy],obj@lakey[alreadyTrophy],pch=19,cex=lcex+0.2,col="black")
+points(obj@lakex[toBtrophy],obj@lakey[toBtrophy],pch=3,cex=lcex+0.2,col="black")
+
+tcex<-0.85
+mtext("(a)",3,line=-1.,adj=0.05,cex=tcex)
+
+legend('topright',legend=c("Not trophy","Trophy","New trophy"),pch=c(1,19,3),col=c('grey82','black','black'),cex=0.7)
+
+
+# panel (b) Regional effort change among angler classes within 100km stocking --------------------------
+
+set.seed(1)
+
+if (!require('TeachingDemos'))    install.packages('TeachingDemos',repos='http://cran.stat.sfu.ca')
+library(TeachingDemos)
+
+aclassnam<-c("Generalists","Social","Enthusiasts","Occasional")
+
+# --- Tidy up population naming ----
+load(file=paste(getwd(),'/Prelim_15_08_16 opt',sep=""))                             # Load a recent full landscape model with all population centres (24) to identify local lakes
+popnams<-obj@pcnam
+for(i in 1:length(popnams)){
+
+  if(class(strsplit(popnams[i],"_"))=='list')popnams[i]<-strsplit(popnams[i],"_")[[1]][1]
+
+}
+oldnam<-c("PrinceGeorge","FortStJohn","Region5Rural","Region6Rural","Region7ORural")
+newnam<-c("Prince George","Fort St John","Cariboo Rural","Skeena Rural","Omineca Rural")
+popnams[match(oldnam,popnams)]<-newnam
+# ---
+
+
+load(file="Trophy1")
+obj1<-obj
+load(file="Trophy2")
+obj2<-obj
+
+
+E1<-apply(obj1@eff[1,1,,,],c(1,3),sum)
+E2<-apply(obj2@eff[1,1,,,],c(1,3),sum)
+E1[E1==0]<-1
+E2[E2==0]<-1
+
+ED<-(E2/E1-1)*100
+
+UTplot(ED,aclassnam,popnams,lonlim,latlim,obj,region_list,cex.axis=0.5)
+
+mtext("(b)",3,line=-1,adj=0.05,cex=tcex)
+
+legend('topright',legend=aclassnam,fill=acol,title='Angler class',cex=0.7)
+
+dev.off()
+
+
+
+
+# Figure A1 =================================
+
+load(paste(getwd(),file='/Prelim_15_08_16',sep=""))
+#oad(file="Prelim_8_10_15")
+#load(paste(getwd(),file='/Prelim_15_08_16',sep=""))
+#obj2<-obj
+
+obj@pcnam[obj@pcnam=="Coquitlam"]<-"Vancouver"
+obj2<-pc_simp(obj,h=600)                                 # Simplify the population centres for uniqueness based on distance
+
+
+popnams<-obj@pcnam
+for(i in 1:length(popnams)) if(class(strsplit(popnams[i],"_"))=='list')popnams[i]<-strsplit(popnams[i],"_")[[1]][1]
+
+oldnam<-c("PrinceGeorge","FortStJohn","Region5Rural","Region6Rural","Region7ORural")
+newnam<-c("Prince George","Fort St John","Cariboo Rural","Skeena Rural","Omineca Rural")
+popnams[match(oldnam,popnams)]<-newnam
+
+
+jpeg(paste(Drive,"/Trout lakes/Images/Fig A1 Clustering.jpg",sep=""),width=8,height=8,units="in",res=600)
+
+  par(mai=c(0.7,0.9,0.01,0.01),omi=c(0.9,0.002,0.5,0.002))    # Set up a plot
+
+  npc<-obj@npc
+  nl<-obj@nl
+  mat<-array(NA,c(npc,npc))
+  for(i in 1:npc){
+    for(j in 1:npc){
+      dif<-((obj@pcxl[1,i,]-obj@pcxl[1,j,])^2)^0.5
+      mat[i,j]<-sum(dif)/nl
+    }
+  }
+  rownames(mat)<-obj@pcnam
+  mat<-as.dist(mat)
+  #mat<-cbind(obj@pcx,obj@pcy)
+  #rownames(mat)<-obj@pcnam
+  out<-hclust(dist(mat),method="ward.D")
+  plot(out,main="",xlab="",ylab="Clustering height")
+  rect.hclust(out,h=600)
+
+  adjy<-c(0.055,0.135,0.315,0.545,0.66,0.715,0.755,0.818,0.915)*25
+  newnam<-c("Prince George","Skeena Rural","Kamloops",
+            "Abbortsford","Cariboo Rural","Prince George",
+            "Omineca Rural","Cranbrook","Nelson")
+
+  for(i in 1:obj2@npc)  mtext(newnam[i],1,at=adjy[i],las=2,line=1.8,font=2,col="red")
+
+
+dev.off()
+
+
+
+
+

@@ -61,9 +61,9 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   output$AllAtt<-renderDT({
     datatable(
-      data.frame(Lake=obj@longnam, Code=obj@lakenam,Selected=select$Lind,Size = obj@lakearea, GDD = round(obj@GDD[1,],0), Dist = round(apply(array(obj@pcsize,c(obj@npc,obj@nl))*obj@pcxl[1,,],2,sum)/sum(obj@pcsize),0),row.names=obj@longnam),
+      data.frame(Lake=obj@longnam, Code=obj@lakenam,Selected=select$Lind,Reg=obj@misc$regs,Size = obj@lakearea, GDD = round(obj@GDD[1,],0), Dist = round(apply(array(obj@pcsize,c(obj@npc,obj@nl))*obj@pcxl[1,,],2,sum)/sum(obj@pcsize),0),row.names=obj@longnam),
       selection = 'none', options=list(pageLength=10,lengthChange = FALSE),
-      colnames=c("Lake","Code","Sel.","Size(ha)","GDD","Ang. dist (km)"),rownames=F)%>%
+      colnames=c("Lake","Code","Sel.","Reg.","Size(ha)","GDD","Ang. dist (km)"),rownames=F)%>%
       formatStyle(columns=1, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))%>%
       formatStyle(columns=2, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))%>%
       formatStyle(columns=3, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))
@@ -158,6 +158,27 @@ options(shiny.maxRequestSize=1000*1024^2)
     plotOut()
 
   })
+
+  output$Conv <- renderPlot({
+
+    dummy<-sum(Calc())+sum(manage$lxslev)+sum(manage$lxattr)+sum(select$Lind)
+    plotconv2(obj,totE=T)
+
+  })
+
+  observeEvent(input$nits,{
+    if(input$nits!=100)Calc(0)
+  })
+
+  observeEvent(input$varind,{
+    if(input$varind!=0.2)Calc(0)
+  })
+
+  observeEvent(input$uprat,{
+    if(input$uprat!=0.05)Calc(0)
+  })
+
+  output$Out_plot_comp<-renderPlot(plotOutComp())
 
   observeEvent(input$LAll,{
       updateSelectInput(session=session,"Lsel",selected=obj@longnam)
@@ -423,6 +444,7 @@ options(shiny.maxRequestSize=1000*1024^2)
       updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[select$Mind])
       obj@misc$Mnams<<-newnams
       updateSelectInput(session,"Del",choices=newnams)
+      updateSelectInput(session,"MToComp",choices=newnams)
       UpScen()
       UpdateSel(obj@longnam[input$Lind])
     }
@@ -515,6 +537,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     newnams<-obj@misc$Mnams
     updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
     updateSelectInput(session,"Del",choices=newnams)
+    updateSelectInput(session,"MToComp",choices=newnams)
     #print(obj@lxslev[,lind,])
 
   })
@@ -548,6 +571,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     newnams<-obj@misc$Mnams
     updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
     updateSelectInput(session,"Del",choices=newnams)
+    updateSelectInput(session,"MToComp",choices=newnams)
     UpScen()
 
   })
@@ -619,13 +643,15 @@ options(shiny.maxRequestSize=1000*1024^2)
   # End of file I/O ===================================================================================
 
 
-#############################################################################################################################################################################
-### Calculation functions
-#############################################################################################################################################################################
+  observeEvent(input$Defaults,{
 
-  # OM conditioning ============================
+    updateSliderInput(session,"nits",value=100)
+    updateSliderInput(session,"varind",value=0.2)
+    updateSliderInput(session,"uprat",value=0.05)
+  })
 
-  # ===== Reports ==================================================================================================
+
+  # ===== Automatic Reports ==================================================================================================
 
   # OM questionnaire report
   #output$Build_OM <- downloadHandler(
@@ -653,17 +679,8 @@ options(shiny.maxRequestSize=1000*1024^2)
 
 
   # ======================= Explanatory Plots ===================================
-  # Scheme
-  fcol = rgb(0.4,0.8,0.95)#"#0299f"
-  fcol2 = "dark grey"
-  icol <- "dodgerblue4"
-  maxcol="cadetblue"
-  mincol="dark grey"
 
-  # Fishery
-  #output$plotM <- renderPlot(plotM())
   output$Land_plot <- renderPlot(plotLand())
 
-    #renderPlot(plotMan())
 
 })

@@ -107,22 +107,22 @@ plotOut<-function(Sel=F){
 
 
     }else{
-      yline<-2.1
+      yline<-2.4
       layout(matrix(c(1,4,2,4,3,4),nrow=2))
-      par(mai=c(0.3,0.4,0.05,0.05))
-      Effort<-matrix(apply(obj@eff[,,,Lind,,drop=T],1,sum),nrow=obj@nmanage)
+      par(mai=c(0.3,0.6,0.15,0.05))
+      Effort<-matrix(apply(obj@eff[,,,Lind,,drop=T],1,sum),nrow=obj@nmanage)/1000
       barplot(Effort,beside=T,col=cols,border=NA)
-      mtext("Effort (days)",2,line=yline)
-      Cost<-matrix(apply(obj@lxslev[,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=obj@nmanage),c(obj@nmanage,sum(Lind),obj@nst)),1,sum),nrow=obj@nmanage)
+      mtext("Effort (,000 days)",2,line=yline)
+      Cost<-matrix(apply(obj@lxslev[,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=obj@nmanage),c(obj@nmanage,sum(Lind),obj@nst)),1,sum),nrow=obj@nmanage)/1000
       barplot(Cost,beside=T,col=cols,border=NA)
-      mtext("Stock. cost ($)",2,line=yline)
+      mtext("Stock. cost ($k)",2,line=yline)
       EpC<-Effort/Cost
       barplot(EpC,beside=T,col=cols,border=NA)
       mtext("Effort / Cost (day / $)",2,line=yline)
       EbA<-apply(obj@eff[,,,Lind,,drop=T],c(1,4),sum)
       colnames(EbA)<-obj@anam
       barplot(EbA,beside=T,col=cols,border=NA)
-      mtext("Effort by ang. class",2,line=yline)
+      mtext("Effort by ang. class (,000 days)",2,line=yline)
     }
 
   }
@@ -130,5 +130,65 @@ plotOut<-function(Sel=F){
 
 }
 
+
+
+plotOutComp<-function(Sel=F){
+
+  cols<-mcols[1:length(obj@misc$Mnams)]
+  Lind<-rep(T,obj@nl)
+  if(Sel)Lind<-select$Lind
+  dummy<-sum(manage$lxslev)+sum(manage$lxattr)+select$Lind
+  Mref<-match(input$MToComp,obj@misc$Mnams)
+  Mindy<-1:length(obj@misc$Mnams)
+  Mcomp<-Mindy[!Mindy%in%Mref]
+  nc<-length(Mcomp)
+
+  if(Sel&sum(Lind)==0&Calc()==1){
+
+    plot(1,1,col='white',axes=F,xlab="",ylab="",main="")
+    legend('center',legend="< No lakes selected >",bty='n',text.col="grey")
+
+  }else{
+
+    multiple<-sum(Lind)>1
+
+    if(!multiple){
+
+
+    }else{
+      yline<-2.4
+      layout(matrix(c(1,4,2,4,3,4),nrow=2))
+      par(mai=c(0.3,0.6,0.15,0.05))
+      Effort_r<-matrix(apply(obj@eff[Mref,,,Lind,,drop=F],1,sum),nrow=1)
+      Effort_c<-matrix(apply(obj@eff[Mcomp,,,Lind,,drop=F],1,sum),nrow=nc)
+      Effort_d<-as.vector(Effort_c)-as.vector(Effort_r)
+      #ylim=c(0,max(1,Effort_d))
+      barplot(Effort_d/1000,beside=T,col=cols[Mcomp],border=NA)
+      mtext("Effort inc. (,000 days)",2,line=yline)
+
+      Cost_r<-matrix(apply(obj@lxslev[Mref,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=1),c(1,sum(Lind),obj@nst)),1,sum),nrow=1)
+      Cost_c<-matrix(apply(obj@lxslev[Mcomp,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=nc),c(nc,sum(Lind),obj@nst)),1,sum),nrow=nc)
+      Cost_d<-as.vector(Cost_c)-as.vector(Cost_r)
+      #ylim=c(0,max(1,Cost_d))
+      barplot(Cost_d/1000,beside=T,col=cols[Mcomp],border=NA)
+      mtext("Stock. cost inc. (,000 $)",2,line=yline)
+
+      EpC<-Effort_d/max(1E-10,Cost_d)
+
+      barplot(EpC,beside=T,col=cols[Mcomp],border=NA)
+      mtext("Effort / Cost (day / $)",2,line=yline)
+
+      EbA_r<-apply(obj@eff[Mref,,,Lind,,drop=T],3,sum)
+      EbA_c<-apply(obj@eff[Mcomp,1,,Lind,,drop=F],c(1,5),sum)
+      EbA_d<-EbA_c-array(rep(EbA_r,each=nc),dim(EbA_c))
+      colnames(EbA_d)<-obj@anam
+      barplot(EbA_d/1000,beside=T,col=cols[Mcomp],border=NA)
+      mtext("Effort inc. by ang. class (,000 days)",2,line=yline)
+    }
+
+  }
+
+
+}
 
 
