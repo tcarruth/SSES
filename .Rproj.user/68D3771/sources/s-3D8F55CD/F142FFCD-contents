@@ -117,16 +117,19 @@ shinyUI(
       tabsetPanel(id = "tabs",selected=1,
 
        tabPanel("Landscape Info",
+            tabsetPanel(id = "Landtab",selected=1,
+                tabPanel(h5("Lake attributes"),
+                         plotOutput("Land_plot",height=240),
+                         column(12,dataTableOutput("AllAtt")),
+                value=1),
+                tabPanel(h5("Management - all lakes",style = "color:blue"),
+                         plotOutput("Man_plot",height=650),
+                value=2),
+                tabPanel(h5("Management - selected lakes",style = "color:red"),
 
-            h5("Lake attributes"),
-            plotOutput("Land_plot",height=140),
-
-            #hr(),
-            h5("Management attributes selected Lakes",style="color:red"),
-            plotOutput("Man_plot_S",height=230),
-            #hr(),
-            h5("Management attributes all lakes",style="color:blue"),
-            plotOutput("Man_plot",height=230),
+                plotOutput("Man_plot_S",height=650),
+                value=3)
+            ),
 
           value=1
        ),

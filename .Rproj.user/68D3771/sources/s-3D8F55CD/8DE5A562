@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576195890709.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "8DE5A562",
+    "lastKnownWriteTime" : 1576200631,
+    "last_content_update" : 1576200631396,
+    "path" : "C:/GitHub/SSES/inst/shiny_apps/SSES/Source/Plots/Landscape_plots.R",
+    "project_path" : "inst/shiny_apps/SSES/Source/Plots/Landscape_plots.R",
+    "properties" : {
+        "cursorPosition" : "20,0",
+        "scrollLine" : "7"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

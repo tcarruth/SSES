@@ -24,7 +24,7 @@ options(shiny.maxRequestSize=1000*1024^2)
   obj<<-readRDS(file="./Data/Landscape.rda")
   #obj<-reactiveVal(readRDS(file="./Data/Landscape_test.rda"))
   manage<-reactiveValues(lxslev=obj@lxslev, lxattr=obj@lxattr)
-  select<-reactiveValues(Lind=NULL,MType=NULL)
+  select<-reactiveValues(Lind=rep(F,obj@nl),MType=NULL)
   Misc  <-reactiveValues(Name=obj@Name)
 
   Calc<-reactiveVal(1) # Has effort been calculated
@@ -57,6 +57,16 @@ options(shiny.maxRequestSize=1000*1024^2)
         circleOptions = FALSE,
         editOptions = editToolbarOptions(edit = FALSE, selectedPathOptions = selectedPathOptions()))
 
+  })
+
+  output$AllAtt<-renderDT({
+    datatable(
+      data.frame(Lake=obj@longnam, Code=obj@lakenam,Selected=select$Lind,Size = obj@lakearea, GDD = round(obj@GDD[1,],0), Dist = round(apply(array(obj@pcsize,c(obj@npc,obj@nl))*obj@pcxl[1,,],2,sum)/sum(obj@pcsize),0),row.names=obj@longnam),
+      selection = 'none', options=list(pageLength=10,lengthChange = FALSE),
+      colnames=c("Lake","Code","Sel.","Size(ha)","GDD","Ang. dist (km)"),rownames=F)%>%
+      formatStyle(columns=1, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))%>%
+      formatStyle(columns=2, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))%>%
+      formatStyle(columns=3, valueColumns=3, color = styleEqual(c(T,F),c("red","blue")))
   })
 
   observeEvent(input$Lmap_draw_new_feature,{
@@ -125,14 +135,9 @@ options(shiny.maxRequestSize=1000*1024^2)
     #return(newdata)
   #})
 
-
-
   # Load source code
   source("./Source/Misc/Misc.R",local=TRUE)
   source("./Source/Plots/Landscape_plots.R",local=TRUE)
-
-  manage<-reactiveValues(lxslev=obj@lxslev)
-
 
   output$Man_plot_S <- renderPlot({
     plotMan(Sel=T)
@@ -244,6 +249,7 @@ options(shiny.maxRequestSize=1000*1024^2)
       #output$RegGrpAtt<-renderDTclass(xr2, selection = 'none',escape=FALSE, caption='',
       #                        class = 'display',options = list(dom = 't'))
       NoSel(0)
+      print(select$Lind)
     }else{
       updateSelectInput(session=session,"Lsel",choices=obj@longnam,selected=NULL)
       nulltab<-data.frame(matrix(rep("-",length(obj@nst)),ncol=obj@nst))
@@ -407,7 +413,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$MakeNewMan,{
 
-    if(!(input$NewMan %in% obj@misc$Mnams)&obj@nmanage<8){
+    if(!(input$NewMan %in% obj@misc$Mnams)&obj@nmanage<6){
       tocopy<-select$Mind
       obj<<-AddMan(obj,tocopy=tocopy)
       manage$lxslev<-obj@lxslev

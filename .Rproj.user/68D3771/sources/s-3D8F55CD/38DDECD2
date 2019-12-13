@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576197818670.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "38DDECD2",
+    "lastKnownWriteTime" : 1574801028,
+    "last_content_update" : 1574801028,
+    "path" : "C:/GitHub/MERA/inst/shiny_apps/MERA/Source/Skins/MSC.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "996,4",
+        "scrollLine" : "987"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
