@@ -259,7 +259,7 @@ options(shiny.maxRequestSize=1000*1024^2)
                   GearRes[obj@lxattr[mind,Lind,4]],
                   TakeLim[obj@lxattr[mind,Lind,6]])
 
-      print(rmat)
+
       xr<<-data.frame(rmat)
       names(xr)<<-c("Boat","Motor","Gear","Take")
       row.names(xr)<<-obj@longnam[Lind]
@@ -270,7 +270,7 @@ options(shiny.maxRequestSize=1000*1024^2)
       #output$RegGrpAtt<-renderDTclass(xr2, selection = 'none',escape=FALSE, caption='',
       #                        class = 'display',options = list(dom = 't'))
       NoSel(0)
-      print(select$Lind)
+
     }else{
       updateSelectInput(session=session,"Lsel",choices=obj@longnam,selected=NULL)
       nulltab<-data.frame(matrix(rep("-",length(obj@nst)),ncol=obj@nst))
@@ -290,9 +290,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(input$LTType=="Region"){
 
       regs<-(1:length(obj@misc$region_names))[obj@misc$region_names%in%input$Region]
-      print(obj@misc$region_names%in%input$Region)
-      print("---")
-      print(regs)
+
 
       if(length(regs)>0){
 
@@ -457,7 +455,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     mind<-select$Mind
 
     boats<-input$EBoatRes
-    print(boats)
+
     if(boats>0)obj@lxattr[mind,Lind,1]<<-as.numeric(boats)
     motors<-input$EMotorRes
     if(motors>0)obj@lxattr[mind,Lind,3]<<-as.numeric(motors)
@@ -465,9 +463,6 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(gears>0)obj@lxattr[mind,Lind,4]<<-as.numeric(gears)
     take<-input$ETakeLim
     if(take>0)obj@lxattr[mind,Lind,6]<<-as.numeric(take)
-
-
-    print(obj@lxattr[mind,Lind,6])
 
     manage$lxattr<-obj@lxattr
     UpdateSel(obj@longnam[Lind])
@@ -504,7 +499,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     lind<-select$Lind
     mind<-select$Mind
     obj@lxslev[mind,lind,j]<<-as.numeric(v)
-    #print(obj@lxslev[,lind,])
+
     Calc(0)
 
   })
@@ -523,7 +518,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     lind<-select$Lind
     mind<-select$Mind
     obj@lxattr[mind,lind,j2]<<-as.numeric(v2)
-    #print(obj@lxslev[,lind,])
+
     Calc(0)
 
   })
@@ -538,7 +533,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
     updateSelectInput(session,"Del",choices=newnams)
     updateSelectInput(session,"MToComp",choices=newnams)
-    #print(obj@lxslev[,lind,])
+
 
   })
 
