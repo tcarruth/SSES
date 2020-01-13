@@ -159,7 +159,7 @@ shinyUI(
                        ),
                        conditionalPanel("input.LTType=='Stock.'",
                                         column(12, checkboxGroupInput("Stype","Stocking type",choices=obj@stnam,selected=obj@stnam[1],inline=TRUE)),
-                                        column(12, sliderInput("Slev","Stocking numbers (,000s)",0,round((max(obj@lxslev)*1.05)/10000,0)*10,value=c(5,20),step=1,round=T)),
+                                        column(12, sliderInput("Slev","Stocking numbers (,000s)",0,round((max(obj@lxslev)*1.05)/10000,0)*10,value=c(5,20),step=1,round=T))
 
                        ),
                        conditionalPanel("input.LTType=='Effort'",

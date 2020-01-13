@@ -12,8 +12,8 @@ License: GPL-2
 Depends:
     R (>= 2.10.0),
 Imports:
-    abind, utils, maps, mapdata,
-    leaflet, googleway, wordcloud,
+    utils, maps, mapdata,
+    leaflet, leaflet.extras, googleway, wordcloud,
     abind, DT
 LazyData: yes
 LazyLoad: yes

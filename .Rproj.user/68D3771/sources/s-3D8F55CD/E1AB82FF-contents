@@ -92,7 +92,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(input$LMode=="Add"){
       #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
       UpdateSel(c(selled,newIDs))
-    }else if(input$LMode=="Subtract"){
+    }else if(input$LMode=="Subtract"&length(selled)>0){
       #newselled<-selled[!selled%in%newIDs]
       #updateSelectInput(session=session,"Lsel",selected=newselled)
       UpdateSel(selled[!selled%in%newIDs])
@@ -124,7 +124,6 @@ options(shiny.maxRequestSize=1000*1024^2)
     newdata$col[select$Lind]<-"red"
     class(newdata$area)<-"numeric"
 
-    #saveRDS(newdata,"C:/temp/newdata")
     return(newdata)
 
   })
@@ -188,7 +187,7 @@ options(shiny.maxRequestSize=1000*1024^2)
 
   observeEvent(input$LClear,{
       updateSelectInput(session=session,"Lsel",selected="")
-
+      leafletProxy("Lmap") %>% clearShapes()#
       select$Lind<-rep(F,obj@nl)
       UpdateSel(NULL)
   }
@@ -221,14 +220,13 @@ options(shiny.maxRequestSize=1000*1024^2)
     }else{
       UpdateSel(tosel=c(selled,out[1]))#updateSelectInput(session=session,"Lsel",selected=c(selled,out[1]))
     }
-    saveRDS(selled,file="C:/temp/selled.rda")
-    saveRDS(out,file="C:/temp/out.rda")
+
     #AM(p)
 
   })
 
   UpdateSel<-function(tosel){ # temporary function for when attributes should be shown
-    #saveRDS(tosel,file="C:/temp/tosel.rda")
+
 
     if(length(tosel)>0){
       tosel<-unique(tosel)
@@ -357,7 +355,7 @@ options(shiny.maxRequestSize=1000*1024^2)
     if(input$LMode=="Add"){
       UpdateSel(c(selled,newIDs))
       #updateSelectInput(session=session,"Lsel",selected=c(selled,newIDs))
-    }else if(input$LMode=="Subtract"){
+    }else if(input$LMode=="Subtract"&length(selled)>0){
 
       UpdateSel(selled[!selled%in%newIDs])
       #updateSelectInput(session=session,"Lsel",selected=newselled)
@@ -672,7 +670,10 @@ options(shiny.maxRequestSize=1000*1024^2)
     #}
   #)
 
-
+  observeEvent(input$Lsel, {
+    select$Lind<-obj@longnam%in%input$Lsel
+    UpdateSel(input$Lsel)
+  })
   # ======================= Explanatory Plots ===================================
 
   output$Land_plot <- renderPlot(plotLand())
