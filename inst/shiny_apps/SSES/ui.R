@@ -74,7 +74,7 @@ shinyUI(
       column(3,style="padding-top:15px;height:55px",
           column(3),
           column(4,tags$a(img(src = "FFS.jpg", height = 50, width = 110),href="https://www.gofishbc.com/",target='_blank')),
-          column(4,tags$a(img(src = "logo 1.png", height = 44, width = 150),href="http://www.bluematter.ca/",target='_blank'))
+          column(4,tags$a(img(src = "logo 1.jpg", height = 50, width = 93),href="http://www.bluematter.ca/",target='_blank'))
 
       )
 
@@ -82,9 +82,9 @@ shinyUI(
     ),
     hr(),
 
-    h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery options.",style = "color:black"),
+    h4("Welcome to SSES, an open-source tool for calculating landscape-scale outcomes of alternative fishery managament policies.",style = "color:black"),
     h5("For further information visit the ", a("SSES website",href="https://github.com/tcarruth/SSES",target="blank"), " consult the ", a("manual", href="https://github.com/tcarruth/SSES", target="_blank")," or read the ", a("paper.", href="https://www.nrcresearchpress.com/doi/abs/10.1139/cjfas-2018-0168?mobileUi=0#.XddppVdKhPY", target="_blank"), style = "color:grey"),
-    h5("For technical questions or bug reports please contact ", a("bluemattersci@gmail.com", href="mailto:bluemattersci@gmail.com", target="_blank"),style = "color:grey"),
+    h5("For technical questions or bug reports please contact ", a("tom@bluematterscience.com", href="mailto:tom@bluematterscience.com", target="_blank"),style = "color:grey"),
     column(12,hr()),
     #column(7,
     #     ),
@@ -203,11 +203,11 @@ shinyUI(
                               h5("Edit by:")
                        ),
                        column(10,style="padding-top:15px",
-                              radioButtons("Rcontrol",label=NULL,choices=c("Individual lakes","Group of lakes"),inline=T)
+                              radioButtons("Rcontrol",label=NULL,choices=c("Individual lakes","Selected lakes"),inline=T)
                        )
                 ),
                 column(12, hr(),style="padding-left:0px"),
-                conditionalPanel("input.Rcontrol=='Group of lakes'",
+                conditionalPanel("input.Rcontrol=='Selected lakes'",
                   column(12,style="padding-top:0px; padding-left:20px",
                      column(6, radioButtons("EBoatRes","Boat Restrictions",choiceNames=c("NC",BoatRes),choiceValues=0:length(BoatRes),inline=TRUE)),
                      column(6, radioButtons("EMotorRes","Motor Restrictions",choiceNames=c("NC",MotorRes),choiceValues=0:length(MotorRes),inline=TRUE)),
@@ -251,7 +251,7 @@ shinyUI(
                              h5("Edit by:")
                       ),
                       column(10,style="padding-top:15px",
-                             radioButtons("Scontrol",label=NULL,choices=c("Individual lakes","Group of lakes"),inline=T)
+                             radioButtons("Scontrol",label=NULL,choices=c("Individual lakes","Selected lakes"),inline=T)
                       )
                ),
                column(12, hr(),style="padding-left:0px"),
@@ -261,7 +261,7 @@ shinyUI(
                                               DTOutput("SelAtt")
                                        )
                       ),
-                      conditionalPanel("input.Scontrol=='Group of lakes'",
+                      conditionalPanel("input.Scontrol=='Selected lakes'",
                                        column(12,checkboxGroupInput("stypes","Stocking type(s) to edit:",choices=obj@stnam,selected=obj@stnam,inline=T)),
                                        column(12,sliderInput("sfac","Stocking factor (multiplier of current level):",0,5,1,step=0.02)),
                                        column(3,h5("Current No. fish (k):")),
@@ -277,7 +277,7 @@ shinyUI(
                                        ),
                                        column(8,style="padding-top:15px",
 
-                                              actionButton("AppStks","Apply Changes to Group Selection",style="color:red")
+                                              actionButton("AppStks","Apply Changes to Selected Lakes",style="color:red")
 
                                        )
                       )
@@ -305,6 +305,10 @@ shinyUI(
                                          selectInput("MToComp","Reference scenario",choices=obj@misc$Mnams,width=400),
                                          plotOutput("Out_plot_comp",height=550)),
                                          value=3),
+                                tabPanel(h5("Effort (d)"),column(12, style='padding-top:10px',DTOutput("OTeff"))),
+                                tabPanel(h5("Cost ($k)"),column(12,style='padding-top:10px', DTOutput("OTcost"))),
+                                tabPanel(h5("CR (f/d)"),column(12,style='padding-top:10px',DTOutput("OTcr"))),
+                                tabPanel(h5("Av Size (cm)"),column(12,style='padding-top:10px',DTOutput("OTavs"))),
                                 tabPanel(h5("Convergence"),
                                          plotOutput("Conv",height=400,width=500),
                                          value=4)

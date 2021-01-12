@@ -104,7 +104,23 @@ plotOut<-function(Sel=F){
     multiple<-sum(Lind)>1
 
     if(!multiple){
-
+      yline<-2.4
+      layout(matrix(c(1,4,2,4,3,4),nrow=2))
+      par(mai=c(0.3,0.6,0.15,0.05))
+      Effort<-matrix(apply(obj@eff[,,,Lind,,drop=F],1,sum),nrow=obj@nmanage)/1000
+      barplot(Effort,beside=T,col=cols,border=NA)
+      legend('top',legend=obj@misc$Mnams,text.col=cols,border="#99999950")
+      mtext("Effort (,000 days)",2,line=yline)
+      Cost<-matrix(apply(obj@lxslev[,Lind,,drop=T]*array(rep(obj@Scosts[,Lind,,drop=T],each=obj@nmanage),c(obj@nmanage,obj@nst)),1,sum),nrow=obj@nmanage)/1000
+      barplot(Cost,beside=T,col=cols,border=NA)
+      mtext("Stock. cost ($k)",2,line=yline)
+      EpC<-Effort/Cost
+      barplot(EpC,beside=T,col=cols,border=NA)
+      mtext("Effort / Cost (day / $)",2,line=yline)
+      EbA<-apply(obj@eff[,,,Lind,,drop=T],c(1,3),sum)
+      colnames(EbA)<-obj@anam
+      barplot(EbA,beside=T,col=cols,border=NA)
+      #mtext("Effort by ang. class (,000 days)",2,line=yline)
 
     }else{
       yline<-2.4
@@ -112,6 +128,7 @@ plotOut<-function(Sel=F){
       par(mai=c(0.3,0.6,0.15,0.05))
       Effort<-matrix(apply(obj@eff[,,,Lind,,drop=T],1,sum),nrow=obj@nmanage)/1000
       barplot(Effort,beside=T,col=cols,border=NA)
+      legend('top',legend=obj@misc$Mnams,text.col=cols,border="#99999950")
       mtext("Effort (,000 days)",2,line=yline)
       Cost<-matrix(apply(obj@lxslev[,Lind,,drop=F]*array(rep(obj@Scosts[,Lind,,drop=F],each=obj@nmanage),c(obj@nmanage,sum(Lind),obj@nst)),1,sum),nrow=obj@nmanage)/1000
       barplot(Cost,beside=T,col=cols,border=NA)

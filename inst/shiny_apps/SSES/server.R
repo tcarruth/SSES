@@ -528,11 +528,57 @@ options(shiny.maxRequestSize=1000*1024^2)
     v = info$value
     obj@misc$Mnams[i]<<-v
     newnams<-obj@misc$Mnams
+
     updateSelectInput(session=session,"MType",choices=newnams,selected=newnams[length(newnams)])
     updateSelectInput(session,"Del",choices=newnams)
     updateSelectInput(session,"MToComp",choices=newnams)
 
 
+  })
+
+
+  # ---- output tables -------------------------------------------------------
+
+  output$OTeff<-renderDT({
+    datatable(
+      as.data.frame(cbind(obj@longnam, obj@lakenam, select$Lind, round(apply(obj@eff,c(4,1),sum),2)),stringsAsFactors=F),
+      selection = 'none',  colnames=c("Lake","Code","Sel",obj@misc$Mnams),rownames=F,
+      extensions='Buttons',options = list(pageLength=15,lengthChange = FALSE,dom = 'Btpl',buttons = c('csv', 'excel'))) %>%
+      formatStyle(columns=1, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=2, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=3, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))
+  })
+
+  output$OTcost<-renderDT({
+    datatable(
+      as.data.frame(cbind(obj@longnam, obj@lakenam, select$Lind,
+                          round(matrix(apply(obj@lxslev[,,,drop=F]*array(rep(obj@Scosts[,,,drop=F],each=obj@nmanage),c(obj@nmanage,obj@nl,obj@nst)),2:1,sum),ncol=obj@nmanage)/1000
+                                                                        ,2)),stringsAsFactors=F),
+      selection = 'none',  colnames=c("Lake","Code","Sel",obj@misc$Mnams),rownames=F,
+      extensions='Buttons',options = list(pageLength=15,lengthChange = FALSE,dom = 'Btpl',buttons = c('csv', 'excel'))) %>%
+      formatStyle(columns=1, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=2, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=3, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))
+  })
+
+  output$OTcr<-renderDT({
+    datatable(
+      as.data.frame(cbind(obj@longnam, obj@lakenam, select$Lind, round(apply(obj@cr,c(3,1),sum),2)),stringsAsFactors=F),
+      selection = 'none',  colnames=c("Lake","Code","Sel",obj@misc$Mnams),rownames=F,
+      extensions='Buttons',options = list(pageLength=15,lengthChange = FALSE,dom = 'Btpl',buttons = c('csv', 'excel'))) %>%
+      formatStyle(columns=1, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=2, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=3, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))
+  })
+
+  output$OTavs<-renderDT({
+    datatable(
+      as.data.frame(cbind(obj@longnam, obj@lakenam, select$Lind, round(apply(obj@avs,c(3,1),sum)/10,2)),stringsAsFactors=F),
+      selection = 'none',  colnames=c("Lake","Code","Sel",obj@misc$Mnams),rownames=F,
+      extensions='Buttons',options = list(pageLength=15,lengthChange = FALSE,dom = 'Btpl',buttons = c('csv', 'excel'))) %>%
+      formatStyle(columns=1, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=2, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))%>%
+      formatStyle(columns=3, valueColumns=3, color = styleEqual(c('TRUE','FALSE'),c("red","blue")))
   })
 
   observeEvent(input$MType,{

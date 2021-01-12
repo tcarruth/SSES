@@ -186,11 +186,11 @@ plotconv2<-function(obj,totE=F,n=20,ylimy=NA,forpaper=F){
   if(is.na(ylimy[1]))ylimy=quantile(conv[1:n,indc],c(0.1,0.9))
 
   if(forpaper){
-    if(!totE)plot(std(obj@conv[1,indc]),axes=F,ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Effort lake x angler x pop. centre (days fished))")
-    if(totE)plot(std(obj@conv[1,indc]),axes=F,ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Effort by lake (days fished)")
+    if(!totE)plot(std(obj@conv[1,indc]),axes=F,ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Change in Effort among iterations, lake x angler x pop. centre (days fished))")
+    if(totE)plot(std(obj@conv[1,indc]),axes=F,ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Change in Effort among iterations by lake (days fished)")
   }else{
-    if(!totE)plot(std(obj@conv[1,indc]),ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Effort (lake x angler x pop. centre)")
-    if(totE)plot(std(obj@conv[1,indc]),ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Effort (by lake)")
+    if(!totE)plot(std(obj@conv[1,indc]),ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Change in Effort among iterations (lake x angler x pop. centre)")
+    if(totE)plot(std(obj@conv[1,indc]),ylim=ylimy,col=coly[1],type="l",lty=ltys[1],lwd=2,main="",xlab="Iteration",ylab="Change in Effort among iterations (by lake)")
   }
   abline(h=c(-1,1),lty=2,col='grey')
   for(i in 2:n)lines(std(obj@conv[i,indc]),col=coly[i],lty=ltys[i],lwd=2)
